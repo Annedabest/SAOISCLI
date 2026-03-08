@@ -1,0 +1,10 @@
+README.md
+setup.py
+saois/__init__.py
+saois/cli.py
+saois.egg-info/PKG-INFO
+saois.egg-info/SOURCES.txt
+saois.egg-info/dependency_links.txt
+saois.egg-info/entry_points.txt
+saois.egg-info/requires.txt
+saois.egg-info/top_level.txt
