@@ -8,21 +8,25 @@ from .os_detector import get_os, get_install_command, open_url, check_tool_insta
 
 console = Console()
 
+TOOL_DETAILS = {
+    "Windsurf": {"command": "windsurf", "url": "https://codeium.com/windsurf"},
+    "Claude": {"command": "claude", "url": "https://claude.ai/code"},
+    "Perplexity": {"command": "perplexity", "url": "https://perplexity.ai"},
+    "Cody": {"command": "cody", "url": "https://sourcegraph.com/cody"},
+    "Continue": {"command": "continue", "url": "https://continue.dev"}
+}
+
 def check_all_tools():
     """Check which tools are installed."""
-    tools_to_check = {
-        "Windsurf": "windsurf",
-        "Claude": "claude",
-        "Perplexity": "perplexity",
-        "Cody": "cody",
-        "Continue": "continue"
-    }
-    
     results = {}
-    for name, command in tools_to_check.items():
-        results[name] = check_tool_installed(command)
+    for name, info in TOOL_DETAILS.items():
+        results[name] = check_tool_installed(info["command"])
     
     return results
+
+def get_tool_info(tool_name):
+    """Return metadata for a tool."""
+    return TOOL_DETAILS.get(tool_name)
 
 def offer_installation(tool_name, tool_command, tool_url):
     """Offer to install a tool if it's not found."""

@@ -33,13 +33,23 @@ from .os_detector import (
     open_application,
     open_url,
     check_tool_installed,
-    get_ai_projects_path
+    get_ai_projects_path,
+    set_ai_projects_path,
+    load_settings
 )
 from .installer import (
     check_all_tools,
     offer_installation,
     verify_tool_installation
 )
+from .helpers import (
+    detect_project_type,
+    run_command_with_output,
+    simplify_error,
+    get_fix_prompt,
+    log_error_to_file
+)
+from .dependency_checker import check_dependencies_for_project
 
 console = Console()
 
@@ -103,16 +113,20 @@ def show_help():
     help_table.add_column("Description", style="white")
     help_table.add_column("Example", style="#00ff88")
     
+    help_table.add_row("quickstart", "Interactive setup guide", "saois quickstart")
+    help_table.add_row("setup", "Configure AI projects folder", "saois setup")
     help_table.add_row("list", "Show all registered projects", "saois list")
     help_table.add_row("add <name> <path>", "Add a single project", "saois add myapp ~/projects/myapp")
     help_table.add_row("import", "Bulk import projects from folder", "saois import")
+    help_table.add_row("validate", "Validate & fix project paths", "saois validate")
+    help_table.add_row("init-brains", "Create project brains for all", "saois init-brains")
     help_table.add_row("status <name>", "Show project details & info", "saois status myapp")
     help_table.add_row("run <name>", "Launch AI tool for project task", "saois run myapp")
+    help_table.add_row("docker <name>", "Start project locally", "saois docker myapp")
+    help_table.add_row("keys <name>", "Extract API keys from project", "saois keys myapp")
     help_table.add_row("doctor", "Check installed AI tools", "saois doctor")
     help_table.add_row("open <name>", "Open project folder", "saois open myapp")
     help_table.add_row("remove <name>", "Remove a project", "saois remove myapp")
-    help_table.add_row("docker <name>", "Start project with Docker", "saois docker myapp")
-    help_table.add_row("keys <name>", "Extract API keys from project", "saois keys myapp")
     help_table.add_row("install", "Install SAOIS globally", "saois install")
     help_table.add_row("uninstall", "Uninstall SAOIS", "saois uninstall")
     help_table.add_row("help", "Show this help message", "saois help")
@@ -192,91 +206,327 @@ def start_docker(name):
     
     project_path = Path(projects[name])
     
+    console.print(f"[bold #00ffff]🚀 Starting Project - {name}[/bold #00ffff]\n")
+    
+    # Check for custom run commands in project brain
+    from .tool_router import read_project_brain
+    brain_data = read_project_brain(project_path)
+    custom_command = None
+    
+    if brain_data and brain_data.get("run_commands"):
+        run_commands = brain_data["run_commands"].strip()
+        # Remove example markers and brackets
+        run_commands = re.sub(r'\[.*?\]', '', run_commands)
+        run_commands = run_commands.replace('Examples:', '').strip()
+        # Get first non-empty line as the command
+        for line in run_commands.split('\n'):
+            line = line.strip().lstrip('-').strip()
+            if line and not line.startswith('[') and not line.startswith('Leave empty'):
+                custom_command = line
+                break
+    
+    if custom_command:
+        console.print(f"[#00ffff]📋 Custom command from project brain:[/#00ffff]")
+        console.print(f"  [bold]{custom_command}[/bold]\n")
+        
+        if Confirm.ask("Run this command?", default=True):
+            with console.status(f"[#00ffff]Running {custom_command}...[/#00ffff]", spinner="dots"):
+                result = run_command_with_output(custom_command, project_path)
+            
+            if result["success"]:
+                console.print("[#00ff00]✓ Command executed successfully![/#00ff00]\n")
+                console.print(result["stdout"])
+            else:
+                console.print(f"[red]✗ Command failed[/red]\n")
+                console.print(f"[yellow]Error:[/yellow] {result['stderr'][:200]}\n")
+                console.print("[dim]Tip: Update RUN COMMANDS in docs/project_brain.md[/dim]")
+        return
+    
+    # Detect project type and requirements
+    project_info = detect_project_type(project_path)
+    
+    # Check and offer to install dependencies
+    if not check_dependencies_for_project(project_info):
+        console.print("\n[dim]Install dependencies and try again[/dim]")
+        return
+    
     # Check for docker-compose.yml or Dockerfile
     docker_compose = project_path / "docker-compose.yml"
     dockerfile = project_path / "Dockerfile"
     
-    if not docker_compose.exists() and not dockerfile.exists():
-        console.print(Panel(
-            "[yellow]No Docker configuration found[/yellow]\n\n"
-            "[dim]Looking for: docker-compose.yml or Dockerfile[/dim]",
-            title=f"[bold #ff00ff]{name}[/bold #ff00ff]",
-            border_style="#ffff00",
-            box=box.ROUNDED
-        ))
+    if docker_compose.exists() or dockerfile.exists():
+        console.print("[#00ffff]🐳 Docker configuration found[/#00ffff]")
+        
+        try:
+            if docker_compose.exists():
+                with console.status("[#00ffff]Running docker-compose up...[/#00ffff]", spinner="dots"):
+                    result = run_command_with_output("docker-compose up -d", project_path)
+                
+                if result["success"]:
+                    console.print("[#00ff00]✓ Docker containers started![/#00ff00]\n")
+                    
+                    # Try to find the port from docker-compose.yml
+                    try:
+                        compose_content = docker_compose.read_text()
+                        port_match = re.search(r'"(\d+):\d+"', compose_content)
+                        if port_match:
+                            port = port_match.group(1)
+                            console.print(f"[bold #00ffff]🌐 Local URL:[/bold #00ffff]")
+                            console.print(f"   [#00ff88]http://localhost:{port}[/#00ff88]\n")
+                        else:
+                            console.print("[dim]Check docker-compose.yml for port mappings[/dim]\n")
+                    except:
+                        console.print("[dim]Check docker-compose.yml for port mappings[/dim]\n")
+                    
+                    console.print("[dim]To stop: docker-compose down[/dim]")
+                else:
+                    console.print(f"[red]✗ Failed to start Docker[/red]\n")
+                    
+                    # Simplify error
+                    simplified = simplify_error(result["stderr"], "docker")
+                    console.print(f"[yellow]Error:[/yellow] {simplified}\n")
+                    
+                    # Generate AI fix prompt
+                    fix_prompt = get_fix_prompt(simplified, "docker", project_info)
+                    
+                    # Log error (opt-in)
+                    log_file = log_error_to_file(name, {
+                        "project_type": "docker",
+                        "command": "docker-compose up -d",
+                        "simplified": simplified,
+                        "full_error": result["stderr"],
+                        "recommendation": "Check Docker is running and ports are available",
+                        "ai_prompt": fix_prompt
+                    }, CONFIG_DIR)
+                    
+                    if log_file:
+                        console.print(f"[dim]Error log saved to: {log_file}[/dim]\n")
+                    
+                    # Recommend AI tool
+                    console.print("[#ff00ff]💡 Recommended action:[/#ff00ff]")
+                    console.print("  Use [bold]Windsurf[/bold] or [bold]Claude[/bold] to fix this")
+                    console.print(f"  Run: [bold]saois run {name}[/bold]\n")
+                    
+                    console.print("[dim]AI Prompt (copy this):[/dim]")
+                    console.print(Panel(fix_prompt, border_style="#ff00ff", box=box.ROUNDED))
+            else:
+                console.print("[yellow]Found Dockerfile but no docker-compose.yml[/yellow]")
+                console.print("[dim]You'll need to build and run manually:[/dim]")
+                console.print(f"[#00ffff]  docker build -t {name} .[/#00ffff]")
+                console.print(f"[#00ffff]  docker run -p 3000:3000 {name}[/#00ffff]")
+        
+        except Exception as e:
+            console.print(f"[red]✗ Error: {e}[/red]")
+    
+    # No Docker - try running with dependencies
+    elif project_info["type"]:
+        console.print(f"[#00ffff]📦 {project_info['type'].title()} project detected[/#00ffff]")
+        console.print(f"[dim]Package manager: {project_info['package_manager'] or 'N/A'}[/dim]\n")
+        
+        if project_info["start_command"]:
+            console.print("[#ff00ff]Recommended command:[/#ff00ff]")
+            console.print(f"  [#00ffff]{project_info['start_command']}[/#00ffff]\n")
+            
+            if Confirm.ask("Run this command now?", default=False):
+                console.print()
+                with console.status(f"[#00ffff]Running {project_info['start_command']}...[/#00ffff]", spinner="dots"):
+                    result = run_command_with_output(project_info["start_command"], project_path)
+                
+                if result["success"]:
+                    console.print("[#00ff00]✓ Project started successfully![/#00ff00]\n")
+                    console.print(result["stdout"])
+                else:
+                    console.print(f"[red]✗ Failed to start project[/red]\n")
+                    
+                    # Simplify error
+                    simplified = simplify_error(result["stderr"], project_info["type"])
+                    console.print(f"[yellow]Error:[/yellow] {simplified}\n")
+                    
+                    # Generate AI fix prompt
+                    fix_prompt = get_fix_prompt(simplified, project_info["type"], project_info)
+                    
+                    # Log error (opt-in)
+                    log_file = log_error_to_file(name, {
+                        "project_type": project_info["type"],
+                        "command": project_info["start_command"],
+                        "simplified": simplified,
+                        "full_error": result["stderr"],
+                        "recommendation": f"Install dependencies and check configuration",
+                        "ai_prompt": fix_prompt
+                    }, CONFIG_DIR)
+                    
+                    if log_file:
+                        console.print(f"[dim]Error log saved to: {log_file}[/dim]\n")
+                    
+                    # Recommend AI tool
+                    console.print("[#ff00ff]💡 Recommended action:[/#ff00ff]")
+                    console.print("  Use [bold]Windsurf[/bold] to debug and fix this")
+                    console.print(f"  Run: [bold]saois run {name}[/bold]\n")
+                    
+                    console.print("[dim]AI Prompt (copy this):[/dim]")
+                    console.print(Panel(fix_prompt, border_style="#ff00ff", box=box.ROUNDED))
+        else:
+            console.print("[yellow]Could not determine start command[/yellow]")
+            console.print("[dim]Check the project documentation for setup instructions[/dim]")
+    else:
+        console.print("[yellow]No Docker or standard project structure found[/yellow]")
+        console.print("[dim]Looking for: docker-compose.yml, Dockerfile, package.json, requirements.txt, etc.[/dim]")
+        console.print("\n[#ff00ff]💡 Tip:[/#ff00ff] Add a docker-compose.yml or check project documentation")
+
+def import_from_github():
+    """Import a project by cloning from GitHub."""
+    from .github_integration import is_git_installed, install_git_prompt, clone_github_repo, parse_github_url
+    
+    if not is_git_installed():
+        if not install_git_prompt():
+            return
+    
+    console.print("[bold #00ffff]🐙 GitHub Import[/bold #00ffff]\n")
+    
+    repo_url = Prompt.ask("[#ff00ff]GitHub repository URL[/#ff00ff]")
+    
+    # Parse repo name
+    repo_name = parse_github_url(repo_url)
+    if not repo_name:
+        console.print("[red]✗ Invalid GitHub URL[/red]")
         return
     
-    console.print(f"[bold #00ffff]🐳 Starting Docker - {name}[/bold #00ffff]\n")
+    # Ask for destination
+    ai_projects = get_ai_projects_path(allow_missing=True)
+    default_dest = str(ai_projects / repo_name) if ai_projects else str(Path.home() / repo_name)
     
-    try:
-        if docker_compose.exists():
-            with console.status("[#00ffff]Running docker-compose up...[/#00ffff]", spinner="dots"):
-                result = subprocess.run(
-                    ["docker-compose", "up", "-d"],
-                    cwd=project_path,
-                    capture_output=True,
-                    text=True
-                )
-            
-            if result.returncode == 0:
-                console.print("[#00ff00]✓ Docker containers started![/#00ff00]\n")
-                
-                # Try to find the port from docker-compose.yml
-                try:
-                    compose_content = docker_compose.read_text()
-                    port_match = re.search(r'"(\d+):\d+"', compose_content)
-                    if port_match:
-                        port = port_match.group(1)
-                        console.print(f"[bold #00ffff]🌐 Local URL:[/bold #00ffff]")
-                        console.print(f"   [#00ff88]http://localhost:{port}[/#00ff88]\n")
-                    else:
-                        console.print("[dim]Check docker-compose.yml for port mappings[/dim]\n")
-                except:
-                    console.print("[dim]Check docker-compose.yml for port mappings[/dim]\n")
-                
-                console.print("[dim]To stop: docker-compose down[/dim]")
-            else:
-                console.print(f"[red]✗ Failed to start Docker[/red]")
-                console.print(f"[dim]{result.stderr}[/dim]")
-        else:
-            console.print("[yellow]Found Dockerfile but no docker-compose.yml[/yellow]")
-            console.print("[dim]You'll need to build and run manually:[/dim]")
-            console.print(f"[#00ffff]  docker build -t {name} .[/#00ffff]")
-            console.print(f"[#00ffff]  docker run -p 3000:3000 {name}[/#00ffff]")
+    destination = Prompt.ask(
+        "[#ff00ff]Clone to[/#ff00ff]",
+        default=default_dest
+    )
+    destination = Path(destination).expanduser()
     
-    except FileNotFoundError:
-        console.print("[red]✗ Docker not found. Please install Docker first.[/red]")
-    except Exception as e:
-        console.print(f"[red]✗ Error: {e}[/red]")
+    if destination.exists():
+        console.print(f"[yellow]⚠️  {destination} already exists[/yellow]")
+        if not Confirm.ask("Overwrite?", default=False):
+            return
+    
+    # Clone repository
+    console.print(f"\n[dim]Cloning {repo_url}...[/dim]")
+    with console.status("[#00ffff]Cloning repository...[/#00ffff]", spinner="dots"):
+        success, error = clone_github_repo(repo_url, destination)
+    
+    if success:
+        console.print(f"[#00ff00]✓ Cloned successfully![/#00ff00]\n")
+        
+        # Add to registry
+        projects = load_projects()
+        projects[repo_name] = str(destination)
+        save_projects(projects)
+        
+        console.print(f"[#00ff00]✓ Added {repo_name} to registry[/#00ff00]")
+        console.print(f"[dim]Run [bold]saois init-brains[/bold] to create project brain[/dim]")
+    else:
+        console.print(f"[red]✗ Clone failed: {error}[/red]")
 
 def import_projects():
     show_header()
     
     console.print("[bold #00ffff]📁 Bulk Project Import[/bold #00ffff]\n")
+    
+    # Ask for source type
+    source_type = Prompt.ask(
+        "[#ff00ff]Import from?[/#ff00ff]",
+        choices=["folder", "github"],
+        default="folder"
+    )
+    
+    if source_type == "github":
+        import_from_github()
+        return
+    
+    # Folder import
     folder_path = Prompt.ask("[#ff00ff]Enter folder path to scan[/#ff00ff]")
     
     with console.status("[#00ffff]Scanning folder...[/#00ffff]", spinner="dots"):
         found = scan_folder_for_projects(folder_path)
     
     if not found:
-        console.print("[yellow]No projects found in this folder[/yellow]")
+        console.print("[yellow]No projects found[/yellow]")
+        return
+    
+    # Exclude AI_PROJECTS folder itself
+    ai_projects_path = get_ai_projects_path(allow_missing=True)
+    if ai_projects_path:
+        ai_projects_name = ai_projects_path.name
+        if ai_projects_name in found:
+            del found[ai_projects_name]
+            console.print(f"[dim]Excluding {ai_projects_name} folder from import[/dim]\n")
+    
+    if not found:
+        console.print("[yellow]No projects found after filtering[/yellow]")
         return
     
     console.print(f"\n[#00ff00]✓ Found {len(found)} projects:[/#00ff00]\n")
-    for name, path in found:
-        console.print(f"  [#00ffff]▸[/#00ffff] {name}")
     
-    if Confirm.ask("\n[#ff00ff]Import all these projects?[/#ff00ff]", default=True):
-        projects = load_projects()
-        added = 0
-        for name, path in found:
-            if name not in projects:
-                projects[name] = path
-                added += 1
-        save_projects(projects)
-        console.print(f"\n[#00ff00]✓ Imported {added} new projects![/#00ff00]")
+    # Show projects with numbers for selection
+    project_list = list(found.items())
+    for i, (name, _) in enumerate(project_list, 1):
+        console.print(f"  [dim]{i:2}.[/dim] [#00ffff]{name}[/#00ffff]")
+    
+    console.print()
+    
+    # Ask for import mode
+    import_mode = Prompt.ask(
+        "[#ff00ff]Import mode?[/#ff00ff]",
+        choices=["all", "select", "cancel"],
+        default="all"
+    )
+    
+    if import_mode == "cancel":
+        console.print("[dim]Cancelled[/dim]")
+        return
+    
+    projects = load_projects()
+    to_import = {}
+    
+    if import_mode == "all":
+        to_import = found
     else:
-        console.print("[yellow]Import cancelled[/yellow]")
+        # Selective import
+        console.print("\n[dim]Enter project numbers to import (comma-separated, or 'all'):[/dim]")
+        console.print("[dim]Example: 1,3,5-8,12[/dim]")
+        selection = Prompt.ask("[#ff00ff]Projects[/#ff00ff]")
+        
+        if selection.lower() == "all":
+            to_import = found
+        else:
+            # Parse selection
+            selected_indices = set()
+            for part in selection.split(","):
+                part = part.strip()
+                if "-" in part:
+                    start, end = part.split("-")
+                    selected_indices.update(range(int(start), int(end) + 1))
+                elif part.isdigit():
+                    selected_indices.add(int(part))
+            
+            for idx in selected_indices:
+                if 1 <= idx <= len(project_list):
+                    name, path = project_list[idx - 1]
+                    to_import[name] = path
+    
+    if not to_import:
+        console.print("[yellow]No projects selected[/yellow]")
+        return
+    
+    # Import selected projects
+    new_count = 0
+    for name, path in to_import.items():
+        if name not in projects:
+            projects[name] = path
+            new_count += 1
+    
+    save_projects(projects)
+    console.print(f"\n[#00ff00]✓ Imported {new_count} new projects![/#00ff00]")
+    
+    if new_count > 0:
+        console.print(f"[dim]Run [bold]saois init-brains[/bold] to create project brains[/dim]")
 
 def list_projects():
     show_header()
@@ -482,20 +732,30 @@ def run_setup_wizard():
     console.print("[bold #00ffff]🚀 SAOIS Setup Wizard[/bold #00ffff]\n")
     console.print("[dim]Let's configure your AI Dev OS![/dim]\n")
     
-    # Step 1: Check AI_PROJECTS folder
-    console.print("[bold #ff00ff]Step 1: AI_PROJECTS Folder[/bold #ff00ff]")
-    ai_projects = get_ai_projects_path()
+    # Step 1: Configure AI_PROJECTS folder
+    console.print("[bold #ff00ff]Step 1: Projects Home Folder[/bold #ff00ff]")
+    current_path = get_ai_projects_path(allow_missing=True)
+    console.print(f"[#00ffff]Current setting:[/#00ffff] {current_path if current_path else 'Not configured'}")
     
-    if ai_projects:
-        console.print(f"[#00ff00]✓ Found: {ai_projects}[/#00ff00]\n")
+    if Confirm.ask("Do you want to change this folder?", default=False):
+        new_path = Prompt.ask("[#ff00ff]Enter full path for your AI projects[/#ff00ff]", default=str(current_path) if current_path else str(Path.home() / "Documents" / "AI_PROJECTS"))
+        new_path = Path(new_path).expanduser()
+        set_ai_projects_path(new_path)
+        if not new_path.exists() and Confirm.ask("Folder does not exist. Create it now?", default=True):
+            new_path.mkdir(parents=True, exist_ok=True)
+            console.print(f"[#00ff00]✓ Created {new_path}[/#00ff00]")
+        console.print(f"[#00ff00]✓ Projects folder set to {new_path}[/#00ff00]\n")
     else:
-        console.print("[yellow]AI_PROJECTS folder not found[/yellow]")
-        if Confirm.ask("Create ~/Documents/AI_PROJECTS now?", default=True):
-            ai_projects_path = Path.home() / "Documents" / "AI_PROJECTS"
-            ai_projects_path.mkdir(parents=True, exist_ok=True)
-            console.print(f"[#00ff00]✓ Created: {ai_projects_path}[/#00ff00]\n")
+        if current_path and not current_path.exists():
+            if Confirm.ask(f"Folder {current_path} is missing. Create it now?", default=True):
+                current_path.mkdir(parents=True, exist_ok=True)
+                console.print(f"[#00ff00]✓ Created {current_path}[/#00ff00]\n")
+            else:
+                console.print("[yellow]Skipping creation. SAOIS will remind you later.[/yellow]\n")
+        elif current_path:
+            console.print(f"[#00ff00]✓ Using {current_path}[/#00ff00]\n")
         else:
-            console.print("[dim]Skipped. You can create it later.[/dim]\n")
+            console.print("[yellow]No folder configured yet. You can set it later.[/yellow]\n")
     
     # Step 2: Check installed tools
     console.print("[bold #ff00ff]Step 2: AI Tools Detection[/bold #ff00ff]")
@@ -537,38 +797,37 @@ def run_setup_wizard():
     console.print("[#00ffff]3.[/#00ffff] Create project brain: [bold]docs/project_brain.md[/bold]")
     console.print("[#00ffff]4.[/#00ffff] Start working: [bold]saois run PROJECT[/bold]\n")
     
-    console.print("[#00ff00]✓ Setup complete! You're ready to use SAOIS.[/#00ff00]")
+    console.print("[#00ff00] Setup complete! You're ready to use SAOIS.[/#00ff00]")
     console.print("[dim]Run [bold]saois help[/bold] to see all commands.[/dim]")
 
 def run_doctor():
-    """Check which AI tools are installed."""
+    """Check system health and installed AI tools."""
     show_header()
     
-    console.print("[bold #00ffff]🔧 SAOIS Doctor - Checking AI Tools[/bold #00ffff]\n")
+    console.print("[bold #00ffff] SAOIS Doctor - Checking AI Tools[/bold #00ffff]\n")
     
     os_type = get_os()
-    console.print(f"[#ff00ff]Operating System:[/#ff00ff] {os_type}\n")
+    console.print(f"[dim]Operating System: {os_type}[/dim]\n")
     
     # Check AI_PROJECTS folder
     ai_projects = get_ai_projects_path()
     if ai_projects:
-        console.print(f"[#00ff00]✓ AI_PROJECTS folder found[/#00ff00]")
-        console.print(f"[dim]  {ai_projects}[/dim]\n")
+        console.print(f"[#00ff00] AI_PROJECTS folder found[/#00ff00]")
+        console.print(f"  {ai_projects}\n")
     else:
-        console.print("[yellow]⚠️  AI_PROJECTS folder not found[/yellow]")
-        console.print("[dim]  Create: ~/Documents/AI_PROJECTS[/dim]\n")
+        console.print(f"[yellow]  AI_PROJECTS folder not found[/yellow]")
+        console.print(f"  [dim]Create: ~/Documents/AI_PROJECTS[/dim]\n")
     
     # Check installed tools
+    console.print("[bold]Installed Tools:[/bold]")
     tools_status = check_all_tools()
-    
-    console.print("[bold #00ffff]Installed Tools:[/bold #00ffff]")
     
     tool_table = Table(show_header=True, header_style="bold #ff00ff", border_style="#00ffff", box=box.ROUNDED)
     tool_table.add_column("Tool", style="#00ffff")
     tool_table.add_column("Status", justify="center")
     tool_table.add_column("Used For", style="dim")
     
-    tool_usage = {
+    task_mapping = {
         "Windsurf": "coding, debugging",
         "Claude": "architecture, planning",
         "Perplexity": "research",
@@ -576,27 +835,60 @@ def run_doctor():
         "Continue": "automation"
     }
     
+    missing_tools = []
     for tool, installed in tools_status.items():
-        status = "[#00ff00]✓ Installed[/#00ff00]" if installed else "[red]✗ Not found[/red]"
-        usage = tool_usage.get(tool, "")
-        tool_table.add_row(tool, status, usage)
+        status = "[#00ff00] [/#00ff00]" if installed else "[red] [/red]"
+        tool_table.add_row(tool, status, task_mapping.get(tool, ""))
+        if not installed:
+            missing_tools.append(tool)
     
     console.print(tool_table)
-    console.print()
     
-    # Show summary
     installed_count = sum(tools_status.values())
-    total_count = len(tools_status)
-    
     if installed_count == 0:
-        console.print("[yellow]No AI tools detected. SAOIS will open browser URLs for now.[/yellow]")
-    elif installed_count < total_count:
-        console.print(f"[#00ffff]{installed_count}/{total_count} tools installed.[/#00ffff]")
+        console.print("\n[yellow]No AI tools detected. SAOIS will open browser URLs for now.[/yellow]")
+    elif installed_count < len(tools_status):
+        console.print(f"\n{installed_count}/{len(tools_status)} tools installed.")
         console.print("[dim]SAOIS will use installed tools and fallback to browser for others.[/dim]")
     else:
-        console.print("[#00ff00]✓ All tools installed! You're ready to go.[/#00ff00]")
+        console.print(f"\n[#00ff00] All {installed_count} tools installed![/#00ff00]")
     
-    console.print("\n[dim]💡 Tip: Use [bold]saois run PROJECT[/bold] to auto-launch the right tool[/dim]")
+    # Offer to install missing tools
+    if missing_tools and Confirm.ask("\n[#ff00ff]Would you like help installing missing tools?[/#ff00ff]", default=False):
+        console.print()
+        from .installer import TOOL_DETAILS
+        
+        for tool_name in missing_tools:
+            tool_info = TOOL_DETAILS.get(tool_name)
+            if not tool_info:
+                continue
+            
+            console.print(f"[bold #ff00ff]{tool_name}[/bold #ff00ff]")
+            console.print(f"[dim]  {task_mapping.get(tool_name, 'AI assistant')}[/dim]")
+            
+            # Check if available via Homebrew
+            homebrew_formulas = {
+                "Windsurf": None,  # Not on Homebrew yet
+                "Claude": None,
+                "Perplexity": None,
+                "Cody": None,
+                "Continue": None
+            }
+            
+            install_choice = Prompt.ask(
+                "  [#ff00ff]Install method?[/#ff00ff]",
+                choices=["browser", "skip"],
+                default="browser"
+            )
+            
+            if install_choice == "browser":
+                console.print(f"  [#00ffff]Opening {tool_info['url']}...[/#00ffff]")
+                open_url(tool_info['url'], os_type)
+                console.print(f"  [dim]Download and install, then run [bold]saois doctor[/bold] again[/dim]\n")
+            else:
+                console.print(f"  [dim]Skipped[/dim]\n")
+    
+    console.print("\n[dim] Tip: Use [bold]saois run PROJECT[/bold] to auto-launch the right tool[/dim]")
 
 def run_project(name):
     """Launch the appropriate AI tool based on project brain."""
@@ -695,6 +987,318 @@ def run_project(name):
         console.print(f"[yellow]{tool_info['name']} not detected[/yellow]\n")
         offer_installation(tool_info['name'], tool_info['command'], tool_info['url'])
 
+def run_quickstart():
+    """Interactive quickstart guide for new users."""
+    show_header()
+    
+    console.print("[bold #00ffff]🚀 SAOIS Quickstart Guide[/bold #00ffff]\n")
+    console.print("[dim]Let's get you started in 5 minutes![/dim]\n")
+    
+    # Step 1: Installation check
+    console.print("[bold #ff00ff]Step 1: Installation[/bold #ff00ff]")
+    if INSTALL_MARKER.exists():
+        console.print("[#00ff00]✓ SAOIS is installed globally[/#00ff00]\n")
+    else:
+        console.print("[yellow]SAOIS not installed globally yet[/yellow]")
+        if Confirm.ask("Install now?", default=True):
+            install_cli()
+        console.print()
+    
+    # Step 2: Projects folder
+    console.print("[bold #ff00ff]Step 2: Projects Folder[/bold #ff00ff]")
+    ai_projects = get_ai_projects_path(allow_missing=True)
+    if ai_projects and ai_projects.exists():
+        console.print(f"[#00ff00]✓ Projects folder: {ai_projects}[/#00ff00]\n")
+    else:
+        console.print("[yellow]No projects folder configured[/yellow]")
+        if Confirm.ask("Run setup wizard to configure?", default=True):
+            run_setup_wizard()
+            return
+        console.print()
+    
+    # Step 3: Check for projects
+    console.print("[bold #ff00ff]Step 3: Your Projects[/bold #ff00ff]")
+    projects = load_projects()
+    if projects:
+        console.print(f"[#00ff00]✓ You have {len(projects)} projects registered[/#00ff00]\n")
+    else:
+        console.print("[yellow]No projects registered yet[/yellow]")
+        choice = Prompt.ask(
+            "[#ff00ff]What would you like to do?[/#ff00ff]",
+            choices=["add", "import", "skip"],
+            default="import"
+        )
+        if choice == "add":
+            name = Prompt.ask("Project name")
+            path = Prompt.ask("Project path")
+            add_project(name, path)
+        elif choice == "import":
+            import_projects()
+        console.print()
+    
+    # Step 4: AI Tools
+    console.print("[bold #ff00ff]Step 4: AI Tools[/bold #ff00ff]")
+    tools_status = check_all_tools()
+    installed = sum(tools_status.values())
+    if installed > 0:
+        console.print(f"[#00ff00]✓ {installed}/5 AI tools detected[/#00ff00]\n")
+    else:
+        console.print("[yellow]No AI tools detected[/yellow]")
+        console.print("[dim]SAOIS will open browser URLs as fallback[/dim]\n")
+    
+    # Step 5: Next actions
+    console.print("[bold #ff00ff]Step 5: Next Steps[/bold #ff00ff]")
+    console.print("[#00ffff]1.[/#00ffff] Validate projects: [bold]saois validate[/bold]")
+    console.print("[#00ffff]2.[/#00ffff] Create project brains: [bold]saois init-brains[/bold]")
+    console.print("[#00ffff]3.[/#00ffff] Check system health: [bold]saois doctor[/bold]")
+    console.print("[#00ffff]4.[/#00ffff] Start working: [bold]saois run PROJECT[/bold]\n")
+    
+    console.print("[#00ff00]✓ Quickstart complete! You're ready to use SAOIS.[/#00ff00]")
+    console.print("[dim]Run [bold]saois help[/bold] to see all commands.[/dim]")
+
+def validate_projects():
+    """Validate all project paths and offer to fix issues."""
+    show_header()
+    
+    console.print("[bold #00ffff]🔍 Project Validation[/bold #00ffff]\n")
+    
+    projects = load_projects()
+    if not projects:
+        console.print("[yellow]No projects to validate[/yellow]")
+        console.print("[dim]Add projects with: [bold]saois add[/bold] or [bold]saois import[/bold][/dim]")
+        return
+    
+    console.print(f"[dim]Checking {len(projects)} projects...[/dim]\n")
+    
+    valid = []
+    missing = []
+    
+    for name, path in projects.items():
+        if Path(path).exists():
+            valid.append((name, path))
+        else:
+            missing.append((name, path))
+    
+    # Show valid projects
+    if valid:
+        console.print(f"[#00ff00]✓ {len(valid)} projects are valid[/#00ff00]")
+        for name, _ in valid[:3]:
+            console.print(f"  [#00ff00]✓[/#00ff00] {name}")
+        if len(valid) > 3:
+            console.print(f"  [dim]... and {len(valid) - 3} more[/dim]")
+        console.print()
+    
+    # Handle missing projects
+    if missing:
+        console.print(f"[yellow]⚠️  {len(missing)} projects have missing paths:[/yellow]\n")
+        
+        # Offer bulk actions
+        if len(missing) > 5:
+            bulk_action = Prompt.ask(
+                f"[#ff00ff]Handle {len(missing)} missing projects?[/#ff00ff]",
+                choices=["one-by-one", "archive-all", "remove-all", "skip-all"],
+                default="one-by-one"
+            )
+            
+            if bulk_action == "archive-all":
+                archive_dir = CONFIG_DIR / "archived_projects"
+                archive_dir.mkdir(exist_ok=True)
+                archived = archive_dir / "projects.json"
+                archived_data = json.loads(archived.read_text()) if archived.exists() else {}
+                
+                for name, path in missing:
+                    archived_data[name] = path
+                    del projects[name]
+                
+                archived.write_text(json.dumps(archived_data, indent=2))
+                save_projects(projects)
+                console.print(f"\n[#ff00ff]✓ Archived {len(missing)} projects[/#ff00ff]")
+                console.print(f"[dim]Location: {archived}[/dim]")
+                return
+            
+            elif bulk_action == "remove-all":
+                if Confirm.ask(f"[red]Really remove all {len(missing)} projects?[/red]", default=False):
+                    for name, _ in missing:
+                        del projects[name]
+                    save_projects(projects)
+                    console.print(f"\n[red]✓ Removed {len(missing)} projects[/red]")
+                return
+            
+            elif bulk_action == "skip-all":
+                console.print("[dim]Skipped validation[/dim]")
+                return
+        
+        archive_dir = CONFIG_DIR / "archived_projects"
+        log_file = CONFIG_DIR / "validation_log.txt"
+        
+        for name, path in missing:
+            console.print(f"[bold #ff00ff]{name}[/bold #ff00ff]")
+            console.print(f"[dim]  Missing: {path}[/dim]")
+            
+            choice = Prompt.ask(
+                "  [#ff00ff]Action?[/#ff00ff]",
+                choices=["fix", "skip", "archive", "remove", "later"],
+                default="skip"
+            )
+            
+            if choice == "fix":
+                new_path = Prompt.ask("  Enter correct path")
+                new_path = str(Path(new_path).expanduser().resolve())
+                if Path(new_path).exists():
+                    projects[name] = new_path
+                    save_projects(projects)
+                    console.print(f"  [#00ff00]✓ Updated path for {name}[/#00ff00]\n")
+                else:
+                    console.print(f"  [red]✗ Path still doesn't exist[/red]\n")
+            
+            elif choice == "archive":
+                archive_dir.mkdir(exist_ok=True)
+                archived = archive_dir / "projects.json"
+                
+                archived_data = {}
+                if archived.exists():
+                    archived_data = json.loads(archived.read_text())
+                
+                archived_data[name] = path
+                archived.write_text(json.dumps(archived_data, indent=2))
+                
+                del projects[name]
+                save_projects(projects)
+                console.print(f"  [#ff00ff]✓ Archived {name}[/#ff00ff]\n")
+            
+            elif choice == "remove":
+                del projects[name]
+                save_projects(projects)
+                console.print(f"  [red]✓ Removed {name}[/red]\n")
+            
+            elif choice == "later":
+                console.print(f"  [dim]Skipped for now[/dim]\n")
+                # Log for future reference
+                log_error_to_file(name, {
+                    "project_type": "validation",
+                    "command": "validate",
+                    "simplified": f"Project path missing: {path}",
+                    "full_error": f"Path does not exist: {path}",
+                    "recommendation": "Update path or remove project",
+                    "ai_prompt": "N/A"
+                }, CONFIG_DIR)
+                break
+            
+            else:  # skip
+                console.print(f"  [dim]Skipped[/dim]\n")
+        
+        if choice != "later":
+            console.print(f"\n[#00ff00]✓ Validation complete![/#00ff00]")
+            valid_count = len([n for n, p in projects.items() if Path(p).exists()])
+            archived_path = str(archive_dir / 'projects.json') if archive_dir.exists() else 'None'
+            console.print(f"[dim]Valid: {valid_count} | Archived: {archived_path}[/dim]")
+    else:
+        console.print("[#00ff00]✓ All projects are valid![/#00ff00]")
+
+def init_all_brains():
+    """Create project_brain.md for all projects that don't have one."""
+    show_header()
+    
+    console.print("[bold #00ffff]🧠 Initialize Project Brains[/bold #00ffff]\n")
+    
+    projects = load_projects()
+    if not projects:
+        console.print("[yellow]No projects to initialize[/yellow]")
+        return
+    
+    # Check which projects need brains
+    needs_brain = []
+    has_brain = []
+    
+    for name, path in projects.items():
+        project_path = Path(path)
+        if not project_path.exists():
+            continue
+        
+        brain_file = project_path / "docs" / "project_brain.md"
+        if brain_file.exists():
+            has_brain.append(name)
+        else:
+            needs_brain.append((name, project_path))
+    
+    if has_brain:
+        console.print(f"[#00ff00]✓ {len(has_brain)} projects already have brains[/#00ff00]\n")
+    
+    if not needs_brain:
+        console.print("[#00ff00]✓ All projects have project brains![/#00ff00]")
+        return
+    
+    console.print(f"[yellow]{len(needs_brain)} projects need project brains[/yellow]\n")
+    
+    # Ask if user wants to customize template
+    use_custom = Confirm.ask("Do you want to customize the template?", default=False)
+    
+    template = get_project_brain_template()
+    
+    if use_custom:
+        console.print("\n[dim]Current template:[/dim]")
+        console.print(Panel(template, border_style="#ff00ff", box=box.ROUNDED))
+        console.print()
+        
+        if Confirm.ask("Edit this template?", default=False):
+            console.print("[dim]Opening template in editor... (save and close when done)[/dim]")
+            temp_file = CONFIG_DIR / "temp_template.md"
+            temp_file.write_text(template)
+            
+            import os
+            editor = os.environ.get('EDITOR', 'nano')
+            subprocess.run([editor, str(temp_file)])
+            
+            if temp_file.exists():
+                template = temp_file.read_text()
+                temp_file.unlink()
+                console.print("[#00ff00]✓ Template updated[/#00ff00]\n")
+    
+    # Create brains
+    created = 0
+    skipped = 0
+    
+    for name, project_path in needs_brain:
+        console.print(f"[bold #ff00ff]{name}[/bold #ff00ff]")
+        console.print(f"[dim]  {project_path}[/dim]")
+        
+        choice = Prompt.ask(
+            "  [#ff00ff]Action?[/#ff00ff]",
+            choices=["create", "skip", "later"],
+            default="create"
+        )
+        
+        if choice == "create":
+            docs_dir = project_path / "docs"
+            docs_dir.mkdir(exist_ok=True)
+            
+            brain_file = docs_dir / "project_brain.md"
+            
+            # Customize template with project name
+            customized = template.replace("[Your project name]", name)
+            customized = customized.replace("[Your project name here]", name)
+            
+            brain_file.write_text(customized)
+            console.print(f"  [#00ff00]✓ Created project brain[/#00ff00]\n")
+            created += 1
+        
+        elif choice == "later":
+            console.print(f"  [dim]Stopping here. Run again to continue.[/dim]\n")
+            break
+        
+        else:
+            console.print(f"  [dim]Skipped[/dim]\n")
+            skipped += 1
+    
+    console.print(f"\n[#00ff00]✓ Initialization complete![/#00ff00]")
+    console.print(f"[dim]Created: {created} | Skipped: {skipped}[/dim]")
+    
+    if created > 0:
+        console.print("\n[#00ffff]💡 Next steps:[/#00ffff]")
+        console.print("  1. Edit each project_brain.md with your project details")
+        console.print("  2. Set the NEXT TASK TYPE (coding, research, etc.)")
+        console.print("  3. Run [bold]saois run PROJECT[/bold] to start working")
+
 def uninstall_cli():
     show_header()
     
@@ -730,11 +1334,14 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     subparsers.add_parser("help", help="Show help and all commands")
+    subparsers.add_parser("quickstart", help="Interactive quickstart guide")
     subparsers.add_parser("setup", help="Setup wizard for tool routing")
     subparsers.add_parser("install", help="Install SAOIS globally")
     subparsers.add_parser("uninstall", help="Uninstall SAOIS")
     subparsers.add_parser("list", help="Show all projects")
     subparsers.add_parser("import", help="Import projects from a folder")
+    subparsers.add_parser("validate", help="Validate and fix project paths")
+    subparsers.add_parser("init-brains", help="Create project brains for all projects")
     subparsers.add_parser("doctor", help="Check installed AI tools")
     
     status_parser = subparsers.add_parser("status", help="Show detailed project status")
@@ -763,8 +1370,14 @@ def main():
     
     if args.command == "help":
         show_help()
+    elif args.command == "quickstart":
+        run_quickstart()
     elif args.command == "setup":
         run_setup_wizard()
+    elif args.command == "validate":
+        validate_projects()
+    elif args.command == "init-brains":
+        init_all_brains()
     elif args.command == "install":
         install_cli()
     elif args.command == "uninstall":

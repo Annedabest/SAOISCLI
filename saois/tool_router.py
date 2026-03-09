@@ -15,12 +15,39 @@ TOOL_MAP = {
     "planning": {"name": "Claude Code", "command": "claude", "url": "https://claude.ai/code"}
 }
 
+def find_project_brain(project_path):
+    """Recursively search for project_brain.md and return all found paths."""
+    project_path = Path(project_path)
+    found_brains = []
+    
+    # Search recursively (max depth 3 to avoid performance issues)
+    for brain_file in project_path.rglob("project_brain.md"):
+        # Skip hidden directories and node_modules, venv, etc.
+        if any(part.startswith('.') or part in ['node_modules', 'venv', '__pycache__', 'dist', 'build'] 
+               for part in brain_file.parts):
+            continue
+        
+        # Limit depth
+        relative = brain_file.relative_to(project_path)
+        if len(relative.parts) <= 4:  # Max 3 subdirectories
+            found_brains.append(brain_file)
+    
+    return found_brains
+
 def read_project_brain(project_path):
     """Read and parse the project brain file."""
     brain_file = Path(project_path) / "docs" / "project_brain.md"
     
     if not brain_file.exists():
-        return None
+        # Try recursive search
+        found_brains = find_project_brain(project_path)
+        
+        if found_brains:
+            # Use the first one found (shortest path preferred)
+            found_brains.sort(key=lambda p: len(p.parts))
+            brain_file = found_brains[0]
+        else:
+            return None
     
     try:
         content = brain_file.read_text()
@@ -32,6 +59,7 @@ def read_project_brain(project_path):
             "current_status": extract_field(content, "CURRENT STATUS"),
             "architecture": extract_field(content, "ARCHITECTURE SUMMARY"),
             "known_issues": extract_field(content, "KNOWN ISSUES"),
+            "run_commands": extract_field(content, "RUN COMMANDS"),
             "next_task_type": extract_field(content, "NEXT TASK TYPE"),
             "next_task": extract_field(content, "NEXT TASK"),
             "raw_content": content
@@ -40,6 +68,23 @@ def read_project_brain(project_path):
         return brain_data
     except Exception as e:
         return None
+
+def get_brain_recommendations(project_path):
+    """Get recommendations for project brain location if not found."""
+    found_brains = find_project_brain(project_path)
+    
+    if found_brains:
+        return {
+            "found": True,
+            "paths": [str(p.relative_to(project_path)) for p in found_brains],
+            "recommended": str(found_brains[0].relative_to(project_path))
+        }
+    else:
+        return {
+            "found": False,
+            "recommended_path": "docs/project_brain.md",
+            "message": "No project_brain.md found. Create one at docs/project_brain.md"
+        }
 
 def extract_field(content, field_name):
     """Extract a field value from the project brain content."""

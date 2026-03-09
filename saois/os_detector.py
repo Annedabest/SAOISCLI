@@ -1,10 +1,26 @@
 """
 OS Detection and Platform-Specific Operations
 """
+import json
 import platform
 import subprocess
 import shutil
 from pathlib import Path
+
+CONFIG_DIR = Path.home() / ".saois"
+SETTINGS_FILE = CONFIG_DIR / "settings.json"
+
+MAC_APP_PATHS = {
+    "windsurf": [
+        "/Applications/Windsurf.app",
+        "/Applications/Windsurf - Next.app",
+        "/Applications/Codeium Windsurf.app"
+    ],
+    "claude": ["/Applications/Claude.app", "/Applications/Claude Code.app"],
+    "perplexity": ["/Applications/Perplexity.app"],
+    "cody": ["/Applications/Cody.app", "/Applications/Sourcegraph Cody.app"],
+    "continue": ["/Applications/Continue.app", "/Applications/Continue Dev.app"]
+}
 
 def get_os():
     """Detect the current operating system."""
@@ -82,11 +98,46 @@ def open_url(url, os_type):
         return False
 
 def check_tool_installed(tool_command):
-    """Check if a tool is installed by looking for its command."""
-    return shutil.which(tool_command) is not None
+    """Check if a tool is installed by looking for CLI binary or macOS app."""
+    if shutil.which(tool_command):
+        return True
+    
+    os_type = get_os()
+    if os_type == "macos":
+        app_paths = MAC_APP_PATHS.get(tool_command, [])
+        for path in app_paths:
+            if Path(path).exists():
+                return True
+    
+    return False
 
-def get_ai_projects_path():
-    """Get the path to AI_PROJECTS folder."""
-    home = Path.home()
-    ai_projects = home / "Documents" / "AI_PROJECTS"
-    return ai_projects if ai_projects.exists() else None
+def load_settings():
+    if SETTINGS_FILE.exists():
+        try:
+            return json.loads(SETTINGS_FILE.read_text())
+        except Exception:
+            return {}
+    return {}
+
+def save_settings(settings):
+    CONFIG_DIR.mkdir(exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps(settings, indent=2))
+
+def get_ai_projects_path(allow_missing=False):
+    """Get the configured AI projects folder."""
+    settings = load_settings()
+    custom_path = settings.get("projects_folder")
+    if custom_path:
+        custom = Path(custom_path)
+        if custom.exists() or allow_missing:
+            return custom
+    default = Path.home() / "Documents" / "AI_PROJECTS"
+    if default.exists() or allow_missing:
+        return default
+    return None
+
+def set_ai_projects_path(path):
+    """Persist a custom AI projects folder."""
+    settings = load_settings()
+    settings["projects_folder"] = str(path)
+    save_settings(settings)

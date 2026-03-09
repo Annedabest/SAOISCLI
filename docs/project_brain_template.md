@@ -13,11 +13,27 @@ ARCHITECTURE SUMMARY:
 KNOWN ISSUES:
 [List of current problems or technical debt]
 
+RUN COMMANDS:
+[Custom commands to run this project - used by 'saois docker PROJECT']
+[Leave empty to use auto-detection]
+[Examples:]
+[  - python3 -m saois.cli help]
+[  - npm run dev]
+[  - docker-compose up -d]
+[  - make run]
+
 NEXT TASK TYPE:
 [Choose one: coding | research | architecture | debugging | analysis | planning | automation]
 
 NEXT TASK:
-[Specific description of what needs to be done next]
+[Detailed list of everything that needs to be done in this task]
+[Be comprehensive - include all steps so AI tools can complete the entire task]
+[Examples:]
+[  1. Create user authentication API endpoints]
+[  2. Add JWT token generation and validation]
+[  3. Write unit tests for auth flow]
+[  4. Update API documentation]
+[  5. Test with Postman and fix any issues]
 
 ---
 
