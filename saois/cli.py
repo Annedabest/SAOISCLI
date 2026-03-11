@@ -127,7 +127,9 @@ def show_help():
     help_table.add_row("docker <name>", "Start project locally", "saois docker myapp")
     help_table.add_row("keys <name>", "Extract API keys from project", "saois keys myapp")
     help_table.add_row("doctor", "Check installed AI tools", "saois doctor")
-    help_table.add_row("setup-tools", "Install all 5 AI tools", "saois setup-tools")
+    help_table.add_row("setup-tools", "Install AI tools", "saois setup-tools")
+    help_table.add_row("config-tools", "Configure your AI tools", "saois config-tools")
+    help_table.add_row("menu", "Interactive menu (easy mode)", "saois menu")
     help_table.add_row("open <name>", "Open project folder", "saois open myapp")
     help_table.add_row("remove <name>", "Remove a project", "saois remove myapp")
     help_table.add_row("git-push <name>", "Commit & push to GitHub", "saois git-push myapp")
@@ -212,9 +214,58 @@ def start_docker(name):
     
     console.print(f"[bold #00ffff]🚀 Starting Project - {name}[/bold #00ffff]\n")
     
-    # Check for custom run commands in project brain
+    # Check for custom run commands
     from .tool_router import read_project_brain
     brain_data = read_project_brain(project_path)
+    
+    # Check if brain is still template (not customized)
+    brain_file = project_path / "docs" / "project_brain.md"
+    if brain_file.exists():
+        content = brain_file.read_text()
+        is_template = "[Your project name]" in content or "Leave empty if not applicable" in content
+        
+        if is_template:
+            console.print("[yellow]⚠️  Project brain is still using template[/yellow]")
+            console.print("[dim]You should customize it with your project details[/dim]\n")
+            
+            if Confirm.ask("[#ff00ff]Show AI prompt to customize it?[/#ff00ff]", default=True):
+                console.print("\n" + "="*60)
+                console.print("[bold #00ffff]📋 COPY THIS PROMPT TO YOUR AI TOOL:[/bold #00ffff]")
+                console.print("="*60 + "\n")
+                
+                prompt = f"""Please help me customize the project_brain.md file for my project.
+
+Project: {name}
+Location: {project_path}
+
+The file is at: {brain_file}
+
+Please:
+1. Read the current project_brain.md file
+2. Analyze the project structure and code
+3. Fill in all the template sections with actual project information:
+   - PROJECT NAME
+   - MISSION (what does this project do?)
+   - CURRENT STATUS (what stage is it in?)
+   - ARCHITECTURE SUMMARY (tech stack, key components)
+   - KNOWN ISSUES (any bugs or problems)
+   - RUN COMMANDS (how to start/test the project)
+   - NEXT TASK (what needs to be done next)
+
+4. Save the updated project_brain.md file
+
+Make it detailed and accurate so AI tools can understand the project context."""
+                
+                console.print(prompt)
+                console.print("\n" + "="*60)
+                console.print("[dim]Copy the text above and paste it into Windsurf, Claude, or your AI tool[/dim]")
+                console.print("="*60 + "\n")
+                
+                if Confirm.ask("[#ff00ff]Open project in AI tool now?[/#ff00ff]", default=True):
+                    pass  # Continue with normal flow
+                else:
+                    return
+    
     custom_command = None
     
     if brain_data and brain_data.get("run_commands"):
@@ -709,6 +760,9 @@ def remove_project(name):
 def install_cli():
     show_header()
     
+    # Ensure config directory exists FIRST
+    CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+    
     shell_rc = Path.home() / ".zshrc"
     alias_line = "alias saois='python3 -m saois.cli'"
     
@@ -784,12 +838,13 @@ def run_setup_wizard():
     routing_table.add_column("Task Type", style="#00ffff")
     routing_table.add_column("Tool", style="#00ff88")
     
-    routing_table.add_row("coding", "Windsurf IDE")
-    routing_table.add_row("debugging", "Windsurf IDE")
-    routing_table.add_row("architecture", "Claude Code")
-    routing_table.add_row("research", "Perplexity AI")
-    routing_table.add_row("analysis", "Sourcegraph Cody")
-    routing_table.add_row("planning", "Claude Code")
+    # Get user's configured tools
+    from .tool_config import load_tools_config, AVAILABLE_TOOLS
+    config = load_tools_config()
+    
+    for task, tool_id in config["task_mapping"].items():
+        tool_name = AVAILABLE_TOOLS.get(tool_id, {}).get("name", tool_id)
+        routing_table.add_row(task, tool_name)
     
     console.print(routing_table)
     console.print()
@@ -834,14 +889,14 @@ def run_doctor():
     task_mapping = {
         "Windsurf": "coding, debugging",
         "Claude": "architecture, planning",
-        "Perplexity": "research",
-        "Cody": "codebase analysis",
-        "Continue": "automation"
+        "Cursor": "coding, AI-first editing",
+        "VS Code": "coding with extensions",
+        "ChatGPT": "general AI assistance"
     }
     
     missing_tools = []
     for tool, installed in tools_status.items():
-        status = "[#00ff00] [/#00ff00]" if installed else "[red] [/red]"
+        status = "[#00ff00]✓ Installed[/#00ff00]" if installed else "[yellow]Not installed[/yellow]"
         tool_table.add_row(tool, status, task_mapping.get(tool, ""))
         if not installed:
             missing_tools.append(tool)
@@ -849,17 +904,19 @@ def run_doctor():
     console.print(tool_table)
     
     installed_count = sum(tools_status.values())
+    console.print(f"\n[#00ffff]Desktop Tools:[/#00ffff] {installed_count}/{len(tools_status)} installed")
+    
     if installed_count == 0:
-        console.print("\n[yellow]No AI tools detected. SAOIS will open browser URLs for now.[/yellow]")
+        console.print("[yellow]⚠️  No desktop AI tools detected[/yellow]")
+        console.print("[dim]Run 'saois setup-tools' to install tools[/dim]")
     elif installed_count < len(tools_status):
-        console.print(f"\n{installed_count}/{len(tools_status)} tools installed.")
-        console.print("[dim]SAOIS will use installed tools and fallback to browser for others.[/dim]")
+        console.print(f"[dim]Run 'saois setup-tools' to install more tools[/dim]")
     else:
-        console.print(f"\n[#00ff00] All {installed_count} tools installed![/#00ff00]")
+        console.print(f"[#00ff00]✓ All desktop tools installed![/#00ff00]")
     
     # Offer to install missing tools
-    if missing_tools and Confirm.ask("\n[#ff00ff]Would you like help installing missing tools?[/#ff00ff]", default=False):
-        console.print()
+    if missing_tools:
+        console.print("\n[#ff00ff]Missing Tools:[/#ff00ff]")
         from .installer import TOOL_DETAILS
         
         for tool_name in missing_tools:
@@ -867,32 +924,15 @@ def run_doctor():
             if not tool_info:
                 continue
             
-            console.print(f"[bold #ff00ff]{tool_name}[/bold #ff00ff]")
-            console.print(f"[dim]  {task_mapping.get(tool_name, 'AI assistant')}[/dim]")
-            
-            # Check if available via Homebrew
-            homebrew_formulas = {
-                "Windsurf": None,  # Not on Homebrew yet
-                "Claude": None,
-                "Perplexity": None,
-                "Cody": None,
-                "Continue": None
-            }
-            
-            install_choice = Prompt.ask(
-                "  [#ff00ff]Install method?[/#ff00ff]",
-                choices=["browser", "skip"],
-                default="browser"
-            )
-            
-            if install_choice == "browser":
-                console.print(f"  [#00ffff]Opening {tool_info['url']}...[/#00ffff]")
-                open_url(tool_info['url'], os_type)
-                console.print(f"  [dim]Download and install, then run [bold]saois doctor[/bold] again[/dim]\n")
-            else:
-                console.print(f"  [dim]Skipped[/dim]\n")
-    
-    console.print("\n[dim] Tip: Use [bold]saois run PROJECT[/bold] to auto-launch the right tool[/dim]")
+            console.print(f"  • [#00ffff]{tool_name}[/#00ffff] - {task_mapping.get(tool_name, 'AI assistant')}")
+            console.print(f"    Download: {tool_info['url']}")
+        
+        if Confirm.ask("\n[#ff00ff]Run installation wizard?[/#ff00ff]", default=True):
+            from .ai_tool_installer import install_all_ai_tools
+            install_all_ai_tools()
+            return
+        
+        console.print("\n[dim]💡 Tip: Run 'saois setup-tools' anytime to install tools[/dim]")
 
 def run_project(name):
     """Launch the appropriate AI tool based on project brain."""
@@ -905,6 +945,10 @@ def run_project(name):
             console.print("[dim]Available projects:[/dim]")
             for p in list(projects.keys())[:5]:
                 console.print(f"  [#00ffff]•[/#00ffff] {p}")
+            console.print(f"\n[dim]💡 Tip: Run 'saois list' to see all projects[/dim]")
+        else:
+            console.print("[dim]No projects registered yet[/dim]")
+            console.print(f"\n[dim]💡 Tip: Run 'saois import' to add projects[/dim]")
         return
     
     project_path = Path(projects[name])
@@ -991,12 +1035,50 @@ def run_project(name):
         console.print(f"[yellow]{tool_info['name']} not detected[/yellow]\n")
         offer_installation(tool_info['name'], tool_info['command'], tool_info['url'])
 
-def run_quickstart():
-    """Interactive quickstart guide for new users."""
+def show_interactive_menu():
+    """Show a simple numbered menu for non-tech users."""
     show_header()
     
-    console.print("[bold #00ffff]🚀 SAOIS Quickstart Guide[/bold #00ffff]\n")
-    console.print("[dim]Let's get you started in 5 minutes![/dim]\n")
+    console.print("[bold #00ffff]🌟 Welcome to SAOIS![/bold #00ffff]\n")
+    console.print("[dim]What would you like to do?[/dim]\n")
+    
+    menu_items = [
+        ("1", "Get Started (First Time Setup)", "quickstart"),
+        ("2", "Import My Projects", "import"),
+        ("3", "View My Projects", "list"),
+        ("4", "Install AI Tools", "setup-tools"),
+        ("5", "Configure My Tools", "config-tools"),
+        ("6", "Check System Health", "doctor"),
+        ("7", "Help & Commands", "help"),
+        ("0", "Exit", "exit")
+    ]
+    
+    for num, label, _ in menu_items:
+        if num == "0":
+            console.print(f"\n  [dim]{num}.[/dim] {label}")
+        else:
+            console.print(f"  [#00ffff]{num}.[/#00ffff] {label}")
+    
+    console.print()
+    choice = Prompt.ask("[#ff00ff]Enter number[/#ff00ff]", default="1")
+    
+    # Map choice to command
+    for num, _, cmd in menu_items:
+        if choice == num:
+            if cmd == "exit":
+                console.print("[dim]Goodbye! 👋[/dim]")
+                return None
+            return cmd
+    
+    return "help"
+
+def run_quickstart():
+    """Interactive quickstart guide for new users - beginner friendly!"""
+    show_header()
+    
+    console.print("[bold #00ffff]🚀 Welcome to SAOIS![/bold #00ffff]\n")
+    console.print("[dim]Let's set you up in just a few easy steps.[/dim]\n"
+                  "[dim]Don't worry - we'll guide you through everything![/dim]\n")
     
     # Step 1: Installation check
     console.print("[bold #ff00ff]Step 1: Installation[/bold #ff00ff]")
@@ -1303,6 +1385,27 @@ def init_all_brains():
         console.print("  2. Set the NEXT TASK TYPE (coding, research, etc.)")
         console.print("  3. Run [bold]saois run PROJECT[/bold] to start working")
 
+def configure_tools():
+    """Configure which AI tools to use for each task."""
+    show_header()
+    from .tool_config import show_tool_selection_menu, configure_task_mapping, show_current_config
+    
+    console.print("[bold #00ffff]⚙️  AI Tools Configuration[/bold #00ffff]\n")
+    console.print("[dim]Configure which tools SAOIS uses for different tasks.[/dim]\n")
+    
+    menu_choice = Prompt.ask(
+        "[#ff00ff]What would you like to do?[/#ff00ff]",
+        choices=["view", "configure", "back"],
+        default="view"
+    )
+    
+    if menu_choice == "view":
+        show_current_config()
+    elif menu_choice == "configure":
+        configure_task_mapping()
+    else:
+        console.print("[dim]Cancelled[/dim]")
+
 def setup_all_tools():
     """Complete AI tools installation wizard."""
     show_header()
@@ -1484,7 +1587,9 @@ def main():
     git_push_parser = subparsers.add_parser("git-push", help="Commit and push to GitHub")
     git_push_parser.add_argument("name", help="Project name")
     
-    setup_tools_parser = subparsers.add_parser("setup-tools", help="Install all 5 AI tools")
+    setup_tools_parser = subparsers.add_parser("setup-tools", help="Install AI tools")
+    config_tools_parser = subparsers.add_parser("config-tools", help="Configure which AI tools to use")
+    menu_parser = subparsers.add_parser("menu", help="Interactive menu (beginner-friendly)")
     
     args = parser.parse_args()
     
@@ -1526,6 +1631,15 @@ def main():
         git_push_project(args.name)
     elif args.command == "setup-tools":
         setup_all_tools()
+    elif args.command == "config-tools":
+        configure_tools()
+    elif args.command == "menu":
+        cmd = show_interactive_menu()
+        if cmd:
+            # Re-run with the selected command
+            import sys
+            sys.argv = ['saois', cmd]
+            main()
     else:
         show_help()
 

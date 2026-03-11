@@ -1,34 +1,69 @@
-# ⚡ SAOIS CLI - Quick Installation Guide
+# ⚡ SAOIS CLI - Installation Guide
 
-## 🚀 One-Time Setup (Any Device)
+## 🎯 Easiest Way (macOS)
 
-### 1. Navigate to the SAOISCLI folder
+**Just double-click `INSTALL_ME.command`!**
+
+That's it! The installer will:
+1. Check Python is installed
+2. Install SAOIS
+3. Tell you what to do next
+
+---
+
+## 📋 Manual Installation (if double-click doesn't work)
+
+### Step 1: Open Terminal
+- Press `Cmd + Space`
+- Type `Terminal`
+- Press Enter
+
+### Step 2: Go to SAOIS folder
 ```bash
-cd /path/to/SAOISCLI
+cd /Volumes/AI-DATA/BuildEasy/SAOISCLI
 ```
+(Change this path to wherever you saved SAOIS)
 
-### 2. Install the Python package
-```bash
-pip3 install -e .
-```
-
-### 3. Install SAOIS globally
+### Step 3: Install
 ```bash
 python3 -m saois.cli install
 ```
 
-### 4. Activate the alias
+### Step 4: Reload Terminal
 ```bash
 source ~/.zshrc
 ```
 
-## ✅ Verify Installation
-
+### Step 5: Start using SAOIS!
 ```bash
-saois list
+saois menu
 ```
 
-You should see the futuristic animated interface!
+---
+
+## ✅ Verify It Works
+
+Type this in Terminal:
+```bash
+saois help
+```
+
+You should see a colorful menu!
+
+---
+
+## 🆘 Troubleshooting
+
+**"command not found: saois"**
+- Run: `source ~/.zshrc`
+- Or close Terminal and open a new one
+
+**"No module named saois"**
+- Make sure you're in the SAOISCLI folder
+- Run: `pip3 install rich`
+
+**Need help?**
+- Run: `saois menu` for an easy interactive guide
 
 ## 🎯 Quick Start
 

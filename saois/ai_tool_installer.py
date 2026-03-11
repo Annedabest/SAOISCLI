@@ -107,65 +107,139 @@ def download_and_install_claude():
         return False
 
 def install_all_ai_tools():
-    """Interactive workflow to install all 5 AI tools."""
-    console.print("\n[bold #00ffff]🚀 Complete AI Tools Setup[/bold #00ffff]\n")
-    console.print("[dim]This wizard will help you install all 5 AI tools:[/dim]")
-    console.print("  1. Windsurf - Coding & Debugging")
-    console.print("  2. Claude - Architecture & Planning")
-    console.print("  3. Perplexity - Research")
-    console.print("  4. Cody - Code Analysis")
-    console.print("  5. Continue - Automation\n")
+    """Interactive workflow to install AI tools - user chooses which ones."""
+    from .tool_config import AVAILABLE_TOOLS, check_tool_installed, detect_installed_tools, save_tools_config, load_tools_config
+    from rich.table import Table
+    from rich import box
     
-    if not Confirm.ask("Start installation wizard?", default=True):
+    console.print("\n[bold #00ffff]🚀 AI Tools Setup Wizard[/bold #00ffff]\n")
+    console.print("[dim]Let's set up your AI development tools![/dim]\n")
+    
+    # Show what's available
+    console.print("[bold #ff00ff]Available Tools:[/bold #ff00ff]\n")
+    
+    table = Table(show_header=True, header_style="bold #ff00ff", border_style="#00ffff", box=box.ROUNDED)
+    table.add_column("#", style="dim", width=3)
+    table.add_column("Tool", style="#00ffff")
+    table.add_column("Status", justify="center")
+    table.add_column("Best For", style="dim")
+    
+    tool_list = [
+        ("windsurf", "Windsurf", "AI-powered coding IDE", "https://codeium.com/windsurf"),
+        ("cursor", "Cursor", "AI-first code editor", "https://cursor.sh"),
+        ("vscode", "VS Code", "Code editor with AI extensions", "https://code.visualstudio.com"),
+        ("claude_desktop", "Claude Desktop", "Architecture & planning", "https://claude.ai/download"),
+        ("chatgpt", "ChatGPT", "General AI assistant", "https://chat.openai.com"),
+        ("perplexity", "Perplexity", "AI research assistant", "https://perplexity.ai"),
+    ]
+    
+    for i, (tool_id, name, desc, _) in enumerate(tool_list, 1):
+        installed = check_tool_installed(tool_id)
+        status = "[#00ff00]✓ Installed[/#00ff00]" if installed else "[yellow]Not installed[/yellow]"
+        table.add_row(str(i), name, status, desc)
+    
+    console.print(table)
+    console.print()
+    
+    # Ask which to install
+    console.print("[dim]Enter numbers of tools to install (comma-separated), or 'all', or 'skip':[/dim]")
+    console.print("[dim]Example: 1,2,4 or all[/dim]")
+    selection = Prompt.ask("[#ff00ff]Tools to install[/#ff00ff]", default="1,4")
+    
+    if selection.lower() == "skip":
+        console.print("[dim]Skipped tool installation[/dim]")
         return
     
-    from .os_detector import check_tool_installed
-    from .installer import TOOL_DETAILS
-    
-    tools_to_install = [
-        ("Windsurf", download_and_install_windsurf),
-        ("Claude", download_and_install_claude),
-        ("Perplexity", lambda: install_browser_tool("Perplexity", "https://perplexity.ai")),
-        ("Cody", lambda: install_browser_tool("Cody", "https://sourcegraph.com/cody")),
-        ("Continue", lambda: install_browser_tool("Continue", "https://continue.dev"))
-    ]
+    # Parse selection
+    selected_indices = set()
+    if selection.lower() == "all":
+        selected_indices = set(range(1, len(tool_list) + 1))
+    else:
+        for part in selection.split(","):
+            part = part.strip()
+            if part.isdigit():
+                selected_indices.add(int(part))
     
     installed_count = 0
     
-    for tool_name, install_func in tools_to_install:
-        console.print(f"\n{'='*60}")
-        console.print(f"[bold #ff00ff]{tool_name}[/bold #ff00ff]")
-        console.print(f"{'='*60}\n")
-        
-        # Check if already installed
-        if check_tool_installed(tool_name):
-            console.print(f"[#00ff00]✓ {tool_name} is already installed![/#00ff00]")
-            installed_count += 1
+    for idx in sorted(selected_indices):
+        if 1 <= idx <= len(tool_list):
+            tool_id, name, desc, url = tool_list[idx - 1]
             
-            if not Confirm.ask("Skip to next tool?", default=True):
-                break
-            continue
-        
-        # Offer to install
-        if Confirm.ask(f"Install {tool_name}?", default=True):
-            if install_func():
+            console.print(f"\n{'='*60}")
+            console.print(f"[bold #ff00ff]{name}[/bold #ff00ff]")
+            console.print(f"{'='*60}\n")
+            
+            # Check if already installed
+            if check_tool_installed(tool_id):
+                console.print(f"[#00ff00]✓ {name} is already installed![/#00ff00]")
                 installed_count += 1
-        else:
-            console.print(f"[dim]Skipped {tool_name}[/dim]")
+                continue
+            
+            # Install based on tool type
+            if tool_id == "windsurf":
+                if download_and_install_windsurf():
+                    installed_count += 1
+            elif tool_id == "cursor":
+                if install_desktop_tool("Cursor", "https://cursor.sh", "/Applications/Cursor.app"):
+                    installed_count += 1
+            elif tool_id == "vscode":
+                if install_desktop_tool("VS Code", "https://code.visualstudio.com", "/Applications/Visual Studio Code.app"):
+                    installed_count += 1
+            elif tool_id == "claude_desktop":
+                if download_and_install_claude():
+                    installed_count += 1
+            elif tool_id == "chatgpt":
+                if install_desktop_tool("ChatGPT", "https://chat.openai.com", "/Applications/ChatGPT.app"):
+                    installed_count += 1
+            else:
+                if install_browser_tool(name, url):
+                    installed_count += 1
     
     # Summary
     console.print(f"\n{'='*60}")
-    console.print("[bold #00ffff]Installation Complete![/bold #00ffff]")
+    console.print("[bold #00ffff]Setup Complete![/bold #00ffff]")
     console.print(f"{'='*60}\n")
-    console.print(f"[#00ff00]✓ {installed_count}/5 tools installed[/#00ff00]\n")
+    console.print(f"[#00ff00]✓ {installed_count} tools configured[/#00ff00]\n")
     
-    if installed_count == 5:
-        console.print("[#00ff00]🎉 All AI tools are ready![/#00ff00]")
-        console.print("[dim]Run 'saois run PROJECT' to start using them[/dim]")
+    # Offer to configure task routing
+    if Confirm.ask("Configure which tool to use for each task type?", default=True):
+        from .tool_config import configure_task_mapping
+        configure_task_mapping()
+    
+    console.print("\n[dim]Run 'saois config-tools' anytime to change your tool preferences[/dim]")
+    console.print("[dim]Run 'saois run PROJECT' to start working![/dim]")
+
+def install_desktop_tool(name, url, app_path):
+    """Install a desktop application."""
+    console.print(f"\n[#ff00ff]Step 1: Download {name}[/#ff00ff]")
+    console.print(f"Opening {url}...")
+    
+    import webbrowser
+    webbrowser.open(url)
+    
+    console.print(f"\n[dim]Complete these steps:[/dim]")
+    console.print(f"  1. Download {name} for your platform")
+    console.print(f"  2. Install the application")
+    console.print(f"  3. Open {name} and sign in")
+    
+    console.print(f"\n[yellow]⚠️  Important: Sign in to {name} before continuing![/yellow]")
+    
+    if not Confirm.ask(f"\nHave you installed AND signed in to {name}?", default=False):
+        console.print(f"[yellow]Setup incomplete. Run 'saois setup-tools' when ready.[/yellow]")
+        return False
+    
+    # Verify installation
+    console.print(f"\n[#ff00ff]Step 2: Verify Installation[/#ff00ff]")
+    if Path(app_path).exists():
+        console.print(f"[#00ff00]✓ {name} detected![/#00ff00]")
+        return True
     else:
-        console.print(f"[yellow]{5 - installed_count} tools remaining[/yellow]")
-        console.print("[dim]Run 'saois doctor' anytime to check status[/dim]")
-        console.print("[dim]Run 'saois setup-tools' to continue installation[/dim]")
+        console.print(f"[yellow]⚠️  {name} not detected at {app_path}[/yellow]")
+        if Confirm.ask("Is it installed in a different location?", default=True):
+            console.print(f"[#00ff00]✓ {name} configured![/#00ff00]")
+            return True
+        return False
 
 def install_browser_tool(tool_name, url):
     """Install a browser-based tool."""

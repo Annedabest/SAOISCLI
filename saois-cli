@@ -1,0 +1,7 @@
+#!/bin/bash
+# SAOIS CLI - Executable wrapper
+# This script allows running SAOIS from anywhere without needing an alias
+
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$SCRIPT_DIR"
+python3 -m saois.cli "$@"

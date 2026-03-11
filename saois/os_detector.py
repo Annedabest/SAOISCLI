@@ -11,15 +11,20 @@ CONFIG_DIR = Path.home() / ".saois"
 SETTINGS_FILE = CONFIG_DIR / "settings.json"
 
 MAC_APP_PATHS = {
-    "windsurf": [
+    "Windsurf": [
         "/Applications/Windsurf.app",
         "/Applications/Windsurf - Next.app",
         "/Applications/Codeium Windsurf.app"
     ],
-    "claude": ["/Applications/Claude.app", "/Applications/Claude Code.app"],
-    "perplexity": ["/Applications/Perplexity.app"],
-    "cody": ["/Applications/Cody.app", "/Applications/Sourcegraph Cody.app"],
-    "continue": ["/Applications/Continue.app", "/Applications/Continue Dev.app"]
+    "Claude": ["/Applications/Claude.app"],
+    "Cursor": ["/Applications/Cursor.app"],
+    "VS Code": [
+        "/Applications/Visual Studio Code.app",
+        "/Applications/VSCode.app"
+    ],
+    "ChatGPT": ["/Applications/ChatGPT.app"],
+    "Cody": ["/Applications/Cody.app", "/Applications/Sourcegraph Cody.app"],
+    "Continue": ["/Applications/Continue.app", "/Applications/Continue Dev.app"]
 }
 
 def get_os():

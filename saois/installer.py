@@ -9,15 +9,15 @@ from .os_detector import get_os, get_install_command, open_url, check_tool_insta
 console = Console()
 
 TOOL_DETAILS = {
-    "Windsurf": {"command": "windsurf", "url": "https://codeium.com/windsurf"},
-    "Claude": {"command": "claude", "url": "https://claude.ai/code"},
-    "Perplexity": {"command": "perplexity", "url": "https://perplexity.ai"},
-    "Cody": {"command": "cody", "url": "https://sourcegraph.com/cody"},
-    "Continue": {"command": "continue", "url": "https://continue.dev"}
+    "Windsurf": {"command": "Windsurf", "url": "https://codeium.com/windsurf"},
+    "Claude": {"command": "Claude", "url": "https://claude.ai/download"},
+    "Cursor": {"command": "Cursor", "url": "https://cursor.sh"},
+    "VS Code": {"command": "VS Code", "url": "https://code.visualstudio.com"},
+    "ChatGPT": {"command": "ChatGPT", "url": "https://chat.openai.com"}
 }
 
 def check_all_tools():
-    """Check which tools are installed."""
+    """Check which DESKTOP tools are installed (not browser-based)."""
     results = {}
     for name, info in TOOL_DETAILS.items():
         results[name] = check_tool_installed(info["command"])

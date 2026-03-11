@@ -1,7 +1,17 @@
+LICENSE
 README.md
 setup.py
 saois/__init__.py
+saois/ai_tool_installer.py
 saois/cli.py
+saois/dependency_checker.py
+saois/github_helper.py
+saois/github_integration.py
+saois/helpers.py
+saois/installer.py
+saois/os_detector.py
+saois/tool_config.py
+saois/tool_router.py
 saois.egg-info/PKG-INFO
 saois.egg-info/SOURCES.txt
 saois.egg-info/dependency_links.txt
