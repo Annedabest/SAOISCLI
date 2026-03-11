@@ -50,6 +50,8 @@ from .helpers import (
     log_error_to_file
 )
 from .dependency_checker import check_dependencies_for_project
+from .github_helper import auto_commit_and_push
+from .ai_tool_installer import install_all_ai_tools
 
 console = Console()
 
@@ -96,14 +98,14 @@ def scan_folder_for_projects(folder_path):
     folder = Path(folder_path).expanduser().resolve()
     if not folder.exists():
         console.print(f"[red]✗ Folder not found: {folder}[/red]")
-        return []
+        return {}
     
-    projects_found = []
+    projects = {}
     for item in folder.iterdir():
         if item.is_dir() and not item.name.startswith('.'):
-            projects_found.append((item.name, str(item)))
+            projects[item.name] = str(item)
     
-    return projects_found
+    return projects
 
 def show_help():
     show_header()
@@ -125,8 +127,10 @@ def show_help():
     help_table.add_row("docker <name>", "Start project locally", "saois docker myapp")
     help_table.add_row("keys <name>", "Extract API keys from project", "saois keys myapp")
     help_table.add_row("doctor", "Check installed AI tools", "saois doctor")
+    help_table.add_row("setup-tools", "Install all 5 AI tools", "saois setup-tools")
     help_table.add_row("open <name>", "Open project folder", "saois open myapp")
     help_table.add_row("remove <name>", "Remove a project", "saois remove myapp")
+    help_table.add_row("git-push <name>", "Commit & push to GitHub", "saois git-push myapp")
     help_table.add_row("install", "Install SAOIS globally", "saois install")
     help_table.add_row("uninstall", "Uninstall SAOIS", "saois uninstall")
     help_table.add_row("help", "Show this help message", "saois help")
@@ -1299,32 +1303,143 @@ def init_all_brains():
         console.print("  2. Set the NEXT TASK TYPE (coding, research, etc.)")
         console.print("  3. Run [bold]saois run PROJECT[/bold] to start working")
 
+def setup_all_tools():
+    """Complete AI tools installation wizard."""
+    show_header()
+    install_all_ai_tools()
+
+def git_push_project(name):
+    """Automated git commit and push for a project."""
+    show_header()
+    projects = load_projects()
+    
+    if name not in projects:
+        console.print(f"[red]✗ Project '{name}' not found[/red]")
+        return
+    
+    project_path = Path(projects[name])
+    auto_commit_and_push(project_path)
+
 def uninstall_cli():
     show_header()
     
-    if not Confirm.ask("[yellow]Uninstall SAOIS?[/yellow]", default=False):
+    console.print("[bold #ff00ff]🗑️  SAOIS Complete Uninstaller[/bold #ff00ff]\n")
+    console.print("[red]⚠️  WARNING: This will completely remove SAOIS from your system[/red]\n")
+    console.print("[dim]This will delete:[/dim]")
+    console.print("  • SAOIS command alias from ALL shell configs")
+    console.print("  • ~/.saois/ directory (all projects, settings, logs)")
+    console.print("  • ~/.saois-cli/ directory (if exists)")
+    console.print("  • Installation markers and cache")
+    console.print("  • Python package installation\n")
+    
+    if not Confirm.ask("[yellow]Are you SURE you want to completely remove SAOIS?[/yellow]", default=False):
         console.print("[dim]Cancelled[/dim]")
         return
     
-    shell_rc = Path.home() / ".zshrc"
-    alias_line = "alias saois='python3 -m saois.cli'"
+    import shutil
+    removed_items = []
     
-    with console.status("[#ff00ff]Uninstalling...[/#ff00ff]", spinner="dots"):
-        time.sleep(0.3)
-        if shell_rc.exists():
-            lines = shell_rc.read_text().split("\n")
-            new_lines = [line for line in lines if alias_line not in line and "# SAOIS CLI" not in line]
-            shell_rc.write_text("\n".join(new_lines))
+    # 1. Remove from ALL shell configs
+    console.print("\n[#00ffff]Step 1: Removing from shell configurations...[/#00ffff]")
+    shell_configs = [
+        Path.home() / ".zshrc",
+        Path.home() / ".bashrc",
+        Path.home() / ".bash_profile",
+        Path.home() / ".profile"
+    ]
+    
+    for shell_rc in shell_configs:
+        if not shell_rc.exists():
+            continue
         
-        if INSTALL_MARKER.exists():
-            INSTALL_MARKER.unlink()
+        try:
+            content = shell_rc.read_text()
+            lines = content.split("\n")
+            
+            # Remove ALL SAOIS-related lines
+            new_lines = []
+            for line in lines:
+                # Skip any line containing saois
+                if "saois" in line.lower() or "# SAOIS" in line:
+                    continue
+                new_lines.append(line)
+            
+            new_content = "\n".join(new_lines)
+            if new_content != content:
+                shell_rc.write_text(new_content)
+                removed_items.append(f"✓ Cleaned {shell_rc.name}")
+        except Exception as e:
+            console.print(f"[yellow]  ⚠️  Could not modify {shell_rc.name}: {e}[/yellow]")
     
-    if CONFIG_DIR.exists() and Confirm.ask("[yellow]Delete all project data?[/yellow]", default=False):
-        shutil.rmtree(CONFIG_DIR)
-        console.print("[#ff0000]✓ Data removed[/#ff0000]")
+    # 2. Remove ~/.saois directory
+    console.print("\n[#00ffff]Step 2: Removing configuration directory...[/#00ffff]")
+    if CONFIG_DIR.exists():
+        try:
+            shutil.rmtree(CONFIG_DIR)
+            removed_items.append(f"✓ Deleted {CONFIG_DIR}")
+        except Exception as e:
+            console.print(f"[yellow]  ⚠️  Could not remove {CONFIG_DIR}: {e}[/yellow]")
     
-    console.print(f"\n[#ff00ff]✓ Uninstalled[/#ff00ff]")
-    console.print("[dim]Run: source ~/.zshrc[/dim]")
+    # 3. Remove ~/.saois-cli directory (if installed there)
+    console.print("\n[#00ffff]Step 3: Removing installation directory...[/#00ffff]")
+    saois_cli_dir = Path.home() / ".saois-cli"
+    if saois_cli_dir.exists():
+        try:
+            shutil.rmtree(saois_cli_dir)
+            removed_items.append(f"✓ Deleted {saois_cli_dir}")
+        except Exception as e:
+            console.print(f"[yellow]  ⚠️  Could not remove {saois_cli_dir}: {e}[/yellow]")
+    
+    # 4. Remove Python package
+    console.print("\n[#00ffff]Step 4: Uninstalling Python package...[/#00ffff]")
+    try:
+        result = subprocess.run(
+            ["pip3", "uninstall", "-y", "saois"],
+            capture_output=True,
+            text=True
+        )
+        if "Successfully uninstalled" in result.stdout or "not installed" in result.stderr:
+            removed_items.append("✓ Uninstalled Python package")
+    except Exception as e:
+        console.print(f"[yellow]  ⚠️  Could not uninstall package: {e}[/yellow]")
+    
+    # 5. Remove .egg-info and build artifacts
+    console.print("\n[#00ffff]Step 5: Cleaning build artifacts...[/#00ffff]")
+    current_dir = Path.cwd()
+    artifacts = [
+        current_dir / "saois.egg-info",
+        current_dir / "build",
+        current_dir / "dist",
+        current_dir / "__pycache__"
+    ]
+    
+    for artifact in artifacts:
+        if artifact.exists():
+            try:
+                if artifact.is_dir():
+                    shutil.rmtree(artifact)
+                else:
+                    artifact.unlink()
+                removed_items.append(f"✓ Deleted {artifact.name}")
+            except:
+                pass
+    
+    # Summary
+    console.print("\n" + "="*60)
+    console.print("[bold #00ff00]✓ SAOIS Completely Uninstalled![/bold #00ff00]")
+    console.print("="*60 + "\n")
+    
+    if removed_items:
+        console.print("[#00ffff]Removed:[/#00ffff]")
+        for item in removed_items:
+            console.print(f"  {item}")
+    
+    console.print("\n[dim]Final steps:[/dim]")
+    console.print("  1. Reload shell: [bold]source ~/.zshrc[/bold] (or ~/.bashrc)")
+    console.print("  2. Verify removal: [bold]saois help[/bold] (should show 'command not found')")
+    console.print("\n[#00ffff]To reinstall:[/#00ffff]")
+    console.print("  cd /path/to/SAOISCLI && ./install.sh")
+    console.print("\n[green]✓ System is clean - no SAOIS traces remaining[/green]")
 
 def main():
     parser = argparse.ArgumentParser(
@@ -1366,6 +1481,11 @@ def main():
     remove_parser = subparsers.add_parser("remove", help="Deregister a project")
     remove_parser.add_argument("name", help="Project name")
     
+    git_push_parser = subparsers.add_parser("git-push", help="Commit and push to GitHub")
+    git_push_parser.add_argument("name", help="Project name")
+    
+    setup_tools_parser = subparsers.add_parser("setup-tools", help="Install all 5 AI tools")
+    
     args = parser.parse_args()
     
     if args.command == "help":
@@ -1402,6 +1522,10 @@ def main():
         add_project(args.name, args.path)
     elif args.command == "remove":
         remove_project(args.name)
+    elif args.command == "git-push":
+        git_push_project(args.name)
+    elif args.command == "setup-tools":
+        setup_all_tools()
     else:
         show_help()
 

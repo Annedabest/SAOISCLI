@@ -9,17 +9,37 @@ from rich.prompt import Prompt, Confirm
 console = Console()
 
 def clone_github_repo(repo_url, destination):
-    """Clone a GitHub repository."""
+    """Clone a GitHub repository to the specified destination."""
     try:
+        # Ensure parent directory exists
+        dest_path = Path(destination)
+        dest_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        # Remove destination if it exists
+        if dest_path.exists():
+            import shutil
+            shutil.rmtree(dest_path)
+        
         result = subprocess.run(
             ["git", "clone", repo_url, str(destination)],
             capture_output=True,
             text=True,
-            timeout=300
+            timeout=60
         )
-        return result.returncode == 0, result.stderr
+        
+        if result.returncode == 0:
+            return True, None
+        else:
+            # Clean up error message
+            error_msg = result.stderr.strip()
+            if "not found" in error_msg.lower():
+                return False, "Repository not found. Check the URL and ensure it's a valid GitHub repository."
+            elif "permission denied" in error_msg.lower():
+                return False, "Permission denied. You may need to authenticate with GitHub."
+            else:
+                return False, error_msg
     except subprocess.TimeoutExpired:
-        return False, "Clone operation timed out (5 minutes)"
+        return False, "Clone operation timed out (60s limit)"
     except Exception as e:
         return False, str(e)
 
