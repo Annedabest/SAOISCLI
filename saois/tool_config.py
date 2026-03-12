@@ -98,15 +98,22 @@ def save_tools_config(config):
 
 def check_tool_installed(tool_id):
     """Check if a tool is installed on the system."""
-    tool = AVAILABLE_TOOLS.get(tool_id)
-    if not tool:
-        return False
+    from .os_detector import check_tool_installed as os_check
     
-    app_path = tool.get("app_path_mac")
-    if app_path:
-        return Path(app_path).exists()
+    # Map tool_id to tool name
+    name_map = {
+        "windsurf": "Windsurf",
+        "claude_desktop": "Claude",
+        "cursor": "Cursor",
+        "vscode": "VS Code",
+        "chatgpt": "ChatGPT"
+    }
     
-    # Browser-based tools are NOT installed - they're just accessible via browser
+    tool_name = tool_name_map.get(tool_id)
+    if tool_name:
+        return os_check_tool(tool_name)
+    
+    # Browser-based tools are NOT installed
     return False
 
 def detect_installed_tools():

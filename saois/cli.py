@@ -130,6 +130,7 @@ def show_help():
     help_table.add_row("setup-tools", "Install AI tools", "saois setup-tools")
     help_table.add_row("config-tools", "Configure your AI tools", "saois config-tools")
     help_table.add_row("menu", "Interactive menu (easy mode)", "saois menu")
+    help_table.add_row("prompts [name]", "Browse AI prompt templates", "saois prompts browse")
     help_table.add_row("open <name>", "Open project folder", "saois open myapp")
     help_table.add_row("remove <name>", "Remove a project", "saois remove myapp")
     help_table.add_row("git-push <name>", "Commit & push to GitHub", "saois git-push myapp")
@@ -589,12 +590,13 @@ def list_projects():
     
     if not projects:
         console.print(Panel(
-            "[#ffff00]No projects yet![/#ffff00]\n\n"
+            "[yellow]No projects yet![/yellow]\n\n"
             "[dim]Get started:[/dim]\n"
-            "  [#00ffff]•[/#00ffff] Add one: [bold]saois add myapp ~/path[/bold]\n"
-            "  [#00ffff]•[/#00ffff] Import many: [bold]saois import[/bold]",
+            "  [#00ffff]1.[/#00ffff] Import projects: [bold]saois import[/bold]\n"
+            "  [#00ffff]2.[/#00ffff] Or add one: [bold]saois add myapp ~/path[/bold]\n\n"
+            "[dim]💡 Tip: Run 'saois menu' for an easy interactive guide[/dim]",
             title="[bold #ff00ff]Projects[/bold #ff00ff]",
-            border_style="#00ffff",
+            border_style="#ffff00",
             box=box.ROUNDED
         ))
         return
@@ -1590,6 +1592,8 @@ def main():
     setup_tools_parser = subparsers.add_parser("setup-tools", help="Install AI tools")
     config_tools_parser = subparsers.add_parser("config-tools", help="Configure which AI tools to use")
     menu_parser = subparsers.add_parser("menu", help="Interactive menu (beginner-friendly)")
+    prompts_parser = subparsers.add_parser("prompts", help="Browse AI prompt templates")
+    prompts_parser.add_argument("template", nargs="?", help="Template name or 'browse'")
     
     args = parser.parse_args()
     
@@ -1640,6 +1644,15 @@ def main():
             import sys
             sys.argv = ['saois', cmd]
             main()
+    elif args.command == "prompts":
+        from .prompt_library import list_prompt_templates, browse_prompts, show_prompt_template
+        if args.template:
+            if args.template == "browse":
+                browse_prompts()
+            else:
+                show_prompt_template(args.template)
+        else:
+            list_prompt_templates()
     else:
         show_help()
 
