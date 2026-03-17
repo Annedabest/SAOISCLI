@@ -1,0 +1,16 @@
+.git
+.gitignore
+*.md
+!website/*.html
+!website/nginx.conf
+tests/
+scripts/
+saois/
+docs/
+*.py
+*.pyc
+__pycache__/
+.pytest_cache/
+*.egg-info/
+dist/
+build/

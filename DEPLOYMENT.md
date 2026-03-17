@@ -29,9 +29,11 @@ git push origin main
 | Setting | Value |
 |---------|-------|
 | **Build Pack** | Dockerfile |
-| **Dockerfile Location** | `website/Dockerfile` |
-| **Build Context** | `website` |
+| **Dockerfile Location** | `Dockerfile` (root directory) |
+| **Base Directory** | `.` (root) |
 | **Port** | 80 |
+
+**Important:** The Dockerfile is now in the root directory and copies files from the `website/` subdirectory.
 
 ### Step 4: Configure Domain
 

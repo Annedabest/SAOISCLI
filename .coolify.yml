@@ -1,0 +1,18 @@
+# Coolify Configuration for SAOIS Website
+# This file helps Coolify understand how to deploy the static website
+
+# Build configuration
+build:
+  dockerfile: Dockerfile
+  context: .
+  
+# Port configuration
+ports:
+  - 80
+
+# Health check
+healthcheck:
+  test: ["CMD", "curl", "-f", "http://localhost/"]
+  interval: 30s
+  timeout: 10s
+  retries: 3
