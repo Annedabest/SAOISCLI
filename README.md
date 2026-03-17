@@ -1,169 +1,111 @@
-# ⚡ SAOIS CLI
+# ⚡ SAOIS
 
-A modern, user-friendly CLI for managing development projects across any device.
+**Your AI Development Assistant** - Work on any project with the right AI tool, automatically.
+
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/Annedabest/SAOISCLI/releases)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Website](https://img.shields.io/badge/website-saois.cli.victorconsultancy.cloud-cyan.svg)](https://saois.cli.victorconsultancy.cloud)
+
+🌐 **Website:** [saois.cli.victorconsultancy.cloud](https://saois.cli.victorconsultancy.cloud)
+
+## What is SAOIS?
+
+SAOIS helps you work on projects with AI assistance. It automatically picks the best AI tool (Windsurf, Cursor, Claude, etc.) for your task and launches it with your project ready to go.
+
+**No complex setup. No manual configuration. Just works.**
+
+## Install (30 seconds)
+
+### One-Click Install
+- **Windows:** Double-click `INSTALL_ME.bat`
+- **macOS:** Double-click `INSTALL_ME.command`
+
+### Manual Install
+
+**Windows (PowerShell):**
+```powershell
+cd path\to\SAOISCLI
+.\scripts\install.ps1
+saois start
+```
+
+**macOS / Linux:**
+```bash
+cd path/to/SAOISCLI
+./scripts/install.sh
+source ~/.zshrc
+saois start
+```
+
+## 6 Commands You Need
+
+| Command | What it does |
+|---------|--------------|
+| `saois start` | Quick setup (run this first!) |
+| `saois work myapp` | Start working on a project |
+| `saois list` | See all your projects |
+| `saois add myapp ~/path` | Add a new project |
+| `saois tools` | Check your AI tools |
+| `saois help` | Show help |
+
+**That's it.** Just 6 commands to remember.
+
+## How It Works
+
+1. **You run:** `saois work myproject`
+2. **SAOIS:** Reads your project, figures out what you're working on
+3. **SAOIS:** Launches the best AI tool (Windsurf for coding, Claude for planning, etc.)
+4. **You:** Start working with full AI assistance
+
+## Example Workflow
+
+```bash
+# First time setup (only once)
+saois start
+
+# Start working on a project
+saois work my-website
+
+# SAOIS opens Windsurf with your project ready!
+```
 
 ## Features
 
-- 🎨 **Clean Modern UI** - Simple, colorful interface anyone can use
-- ⚡ **Quick Setup** - One script to install globally
-- 📁 **Bulk Import** - Scan folders and import all projects at once
-- 🐳 **Docker Integration** - Start projects with one command, get local URLs
-- 🔑 **API Key Extraction** - Find and display API keys from .env files
-- 📊 **Smart Status** - Detects project type and shows relevant info
-- 🚀 **Fast & Simple** - No complex commands, just works
-- 💡 **Helpful Tips** - Guides you through every action
-- ✓ **Smart Validation** - Confirms before destructive actions
-- ❓ **Built-in Help** - `saois help` shows all commands
+- ✅ **Zero Config** - Works out of the box
+- ✅ **Smart Routing** - Picks the right AI tool automatically
+- ✅ **Auto-Discovery** - Finds your projects automatically
+- ✅ **Cross-Platform** - Windows, macOS, Linux
+- ✅ **Privacy First** - No data collection, everything local
 
-## Quick Start
+## Supported AI Tools
 
-### Option 1: Quick Install (Recommended)
-```bash
-cd /path/to/SAOISCLI
-./install.sh
-source ~/.zshrc
-```
+| Tool | Best For |
+|------|----------|
+| **Windsurf** | Coding with AI |
+| **Cursor** | AI-first editing |
+| **VS Code** | General coding |
+| **Claude** | Planning & architecture |
+| **ChatGPT** | General AI help |
+| **Perplexity** | Research & learning |
 
-### Option 2: Manual Install
-```bash
-cd /path/to/SAOISCLI
-pip3 install -e .
-python3 -m saois.cli install
-source ~/.zshrc
-```
+SAOIS automatically uses whatever you have installed.
 
-### Option 3: Temporary Use (No Install)
-```bash
-cd /path/to/SAOISCLI
-source activate.sh
-```
+## Documentation
 
-Now use `saois` from anywhere!
+- [Installation Guide](docs/user-guide/INSTALL.md)
+- [Quick Start](docs/user-guide/QUICKSTART.md)
+- [All Features](docs/user-guide/FEATURES.md)
 
-## Usage
+## Troubleshooting
 
-### � View All Projects
-```bash
-saois list
-```
-Shows a clean table with all your projects, their locations, and status.
+**"command not found: saois"**
+- Restart your terminal
+- Or run: `source ~/.zshrc`
 
-### ➕ Add a Single Project
-```bash
-saois add myapp ~/projects/myapp
-```
-Adds one project to your registry.
+**"No AI tools found"**
+- SAOIS will open browser versions instead
+- Install Windsurf or Cursor for best experience
 
-### 📁 Import Multiple Projects (NEW!)
-```bash
-saois import
-```
-Scans a folder and imports all subdirectories as projects. Perfect for:
-- Importing all projects from `~/projects/`
-- Bulk adding from a workspace folder
-- Quick setup on a new device
+## License
 
-### 📖 View Project Status
-```bash
-saois status myapp
-```
-Shows detailed project information:
-- Location and existence check
-- Detected project type (Node.js, Python, Rust, Go)
-- Available files (Docker, .env, README, etc.)
-- Quick action suggestions
-
-### 🐳 Start Project with Docker
-```bash
-saois docker myapp
-```
-Automatically runs `docker-compose up -d` and shows the local URL:
-- Detects docker-compose.yml or Dockerfile
-- Starts containers in detached mode
-- Extracts and displays the local URL (e.g., http://localhost:3000)
-- Shows how to stop containers
-
-### 🔑 Extract API Keys
-```bash
-saois keys myapp
-```
-Scans project for API keys and secrets:
-- Searches .env, .env.local, .env.production, config files
-- Finds API_KEY, SECRET, TOKEN, DATABASE_URL patterns
-- Displays masked values for security (e.g., `abcd****xyz`)
-- Lists which files contain keys
-
-### 🚀 Open a Project
-```bash
-saois open myapp
-```
-Opens the project folder in Finder.
-
-### 🗑️ Remove a Project
-```bash
-saois remove myapp
-```
-Removes a project from the registry (asks for confirmation).
-
-### ❓ Get Help
-```bash
-saois help
-```
-Shows all available commands with examples.
-
-### ⚙️ System Commands
-
-**Install globally**
-```bash
-saois install
-```
-
-**Uninstall**
-```bash
-saois uninstall
-```
-
-## Configuration
-
-Projects are stored in `~/.saois/projects.json`
-
-Example:
-```json
-{
-  "saois-builder": "/Users/anne/projects/saois-builder",
-  "crypto-agent": "/Users/anne/projects/crypto-agent"
-}
-```
-
-## UI Features
-
-- **Clean Header** - Simple ⚡ SAOIS CLI ⚡ branding with rounded borders
-- **Readable Tables** - Clear columns with proper spacing
-- **Color Coding** - Cyan for names, green for success, red for errors, yellow for warnings
-- **Status Icons** - ✓ Ready / ✗ Missing for quick visual feedback
-- **Helpful Tips** - Context-sensitive guidance after each command
-- **Confirmation Prompts** - Asks before deleting or making changes
-- **Spinner Animations** - Smooth loading indicators
-- **Numbered Lists** - Easy reference for projects
-- **Rounded Boxes** - Modern, friendly panel styling
-- **Smart Defaults** - Sensible default choices for prompts
-
-## Device Portability
-
-SAOIS can be installed on any device with Python 3.7+. Simply:
-1. Copy the SAOISCLI folder to the new device
-2. Run `pip3 install -e .` in the folder
-3. Run `python3 -m saois.cli install`
-4. Source your shell config
-
-The CLI will have access to any project on your device - just register them with `saois add`!
-
-
-# COMMANDS:
-saois list
-saois add <name> <path>
-saois status <project>
-saois open <project>
-saois remove <name>
-saois install
-saois uninstall
+MIT License - Use freely!

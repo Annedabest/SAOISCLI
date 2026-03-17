@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAOIS Documentation</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ffff;
+            --secondary: #ff00ff;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-dim: #888;
+            --success: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.7;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Header */
+        header {
+            padding: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        header a {
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        /* Main Content */
+        main {
+            padding: 60px 24px;
+        }
+
+        h1 {
+            font-size: 48px;
+            margin-bottom: 16px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        h2 {
+            font-size: 28px;
+            margin-top: 48px;
+            margin-bottom: 16px;
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 20px;
+            margin-top: 32px;
+            margin-bottom: 12px;
+        }
+
+        p {
+            color: var(--text-dim);
+            margin-bottom: 16px;
+        }
+
+        code {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 14px;
+        }
+
+        pre {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            overflow-x: auto;
+            margin: 16px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: var(--text);
+        }
+
+        .highlight {
+            color: var(--primary);
+        }
+
+        ul, ol {
+            padding-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 24px 0;
+        }
+
+        th, td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        th {
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        td {
+            color: var(--text-dim);
+        }
+
+        td code {
+            font-size: 13px;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .tip {
+            background: rgba(0, 255, 255, 0.1);
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .tip p {
+            margin: 0;
+            color: var(--text);
+        }
+
+        .warning {
+            background: rgba(255, 200, 0, 0.1);
+            border-left: 4px solid #ffc800;
+            padding: 16px 20px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .warning p {
+            margin: 0;
+            color: var(--text);
+        }
+
+        /* Navigation */
+        .nav-links {
+            display: flex;
+            gap: 24px;
+            margin-bottom: 48px;
+            flex-wrap: wrap;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            background: var(--bg-card);
+            transition: all 0.2s;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary);
+            background: rgba(0, 255, 255, 0.1);
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <a href="index.html">⚡ SAOIS</a>
+        </div>
+    </header>
+
+    <main>
+        <div class="container">
+            <h1>Documentation</h1>
+            <p>Everything you need to know about using SAOIS effectively.</p>
+
+            <div class="nav-links">
+                <a href="#installation">Installation</a>
+                <a href="#commands">Commands</a>
+                <a href="#prompts">Prompt Templates</a>
+                <a href="#project-brain">Project Brain</a>
+                <a href="#troubleshooting">Troubleshooting</a>
+            </div>
+
+            <!-- Installation -->
+            <h2 id="installation">Installation</h2>
+            
+            <h3>Windows</h3>
+            <p>The easiest way to install on Windows:</p>
+            <ol>
+                <li>Download and extract SAOIS</li>
+                <li>Double-click <code>INSTALL_ME.bat</code></li>
+                <li>Follow the prompts</li>
+            </ol>
+            
+            <p>Or use PowerShell:</p>
+            <pre><code>cd path\to\SAOISCLI
+.\scripts\install.ps1</code></pre>
+
+            <h3>macOS / Linux</h3>
+            <pre><code>cd path/to/SAOISCLI
+./scripts/install.sh
+source ~/.zshrc</code></pre>
+
+            <div class="tip">
+                <p>💡 After installation, run <code>saois start</code> to complete setup.</p>
+            </div>
+
+            <!-- Commands -->
+            <h2 id="commands">Commands</h2>
+            
+            <p>SAOIS has just 6 commands to remember:</p>
+
+            <table>
+                <tr>
+                    <th>Command</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td><code>saois start</code></td>
+                    <td>Quick setup wizard - run this first!</td>
+                </tr>
+                <tr>
+                    <td><code>saois work &lt;name&gt;</code></td>
+                    <td>Start working on a project with the best AI tool</td>
+                </tr>
+                <tr>
+                    <td><code>saois list</code></td>
+                    <td>Show all registered projects</td>
+                </tr>
+                <tr>
+                    <td><code>saois add &lt;name&gt; &lt;path&gt;</code></td>
+                    <td>Add a new project to SAOIS</td>
+                </tr>
+                <tr>
+                    <td><code>saois tools</code></td>
+                    <td>Check which AI tools are installed</td>
+                </tr>
+                <tr>
+                    <td><code>saois help</code></td>
+                    <td>Show help and all commands</td>
+                </tr>
+            </table>
+
+            <h3>Examples</h3>
+            <pre><code><span class="highlight"># First time setup</span>
+saois start
+
+<span class="highlight"># Add a project</span>
+saois add my-website ~/projects/my-website
+
+<span class="highlight"># Start working</span>
+saois work my-website
+
+<span class="highlight"># See all projects</span>
+saois list</code></pre>
+
+            <!-- Prompt Templates -->
+            <h2 id="prompts">Prompt Templates</h2>
+            
+            <p>SAOIS includes built-in prompt templates to help you work more effectively with AI tools.</p>
+
+            <h3>Using Templates</h3>
+            <p>Templates are stored in <code>docs/templates/</code> in your SAOIS folder. You can:</p>
+            <ul>
+                <li>Copy and paste them into your AI tool</li>
+                <li>Customize them for your specific needs</li>
+                <li>Create your own templates</li>
+            </ul>
+
+            <h3>Available Templates</h3>
+
+            <div class="card">
+                <h4>🐛 Debug Helper</h4>
+                <p>Use this when you have a bug to fix. It structures your request with:</p>
+                <ul>
+                    <li>Error description</li>
+                    <li>What you've tried</li>
+                    <li>Expected vs actual behavior</li>
+                    <li>Relevant code context</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>📝 Code Review</h4>
+                <p>Get thorough code reviews with suggestions for:</p>
+                <ul>
+                    <li>Code quality improvements</li>
+                    <li>Performance optimizations</li>
+                    <li>Security considerations</li>
+                    <li>Best practices</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>🏗️ Architecture Planning</h4>
+                <p>Plan your project structure with prompts for:</p>
+                <ul>
+                    <li>System design</li>
+                    <li>Database schema</li>
+                    <li>API design</li>
+                    <li>Component structure</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h4>📚 Documentation Generator</h4>
+                <p>Generate clear documentation for:</p>
+                <ul>
+                    <li>README files</li>
+                    <li>API documentation</li>
+                    <li>User guides</li>
+                    <li>Code comments</li>
+                </ul>
+            </div>
+
+            <h3>Creating Your Own Templates</h3>
+            <p>Create a new <code>.md</code> file in <code>docs/templates/</code>:</p>
+            <pre><code># My Custom Template
+
+## Context
+[Describe the context for this prompt]
+
+## Task
+[What you want the AI to do]
+
+## Requirements
+- Requirement 1
+- Requirement 2
+
+## Output Format
+[How you want the response formatted]</code></pre>
+
+            <!-- Project Brain -->
+            <h2 id="project-brain">Project Brain</h2>
+            
+            <p>Each project can have a "brain" file that tells SAOIS what you're working on. This helps SAOIS pick the right AI tool.</p>
+
+            <h3>How It Works</h3>
+            <ol>
+                <li>SAOIS looks for <code>docs/project_brain.md</code> in your project</li>
+                <li>It reads the task type (code, research, or plan)</li>
+                <li>It launches the best AI tool for that task</li>
+            </ol>
+
+            <h3>Task Types</h3>
+            <table>
+                <tr>
+                    <th>Task Type</th>
+                    <th>Best Tools</th>
+                    <th>Use For</th>
+                </tr>
+                <tr>
+                    <td><code>code</code></td>
+                    <td>Windsurf, Cursor, VS Code</td>
+                    <td>Writing code, debugging, features</td>
+                </tr>
+                <tr>
+                    <td><code>research</code></td>
+                    <td>Perplexity, ChatGPT</td>
+                    <td>Learning, exploring, finding solutions</td>
+                </tr>
+                <tr>
+                    <td><code>plan</code></td>
+                    <td>Claude, ChatGPT</td>
+                    <td>Architecture, design, planning</td>
+                </tr>
+            </table>
+
+            <h3>Example Project Brain</h3>
+            <pre><code># My Website - Project Brain
+
+## What is this project?
+A personal portfolio website built with Next.js
+
+## Current Status
+In development - building the blog section
+
+## What I'm Working On
+**Task Type:** code
+**Current Task:** Add markdown blog support
+
+## How to Run
+```bash
+npm run dev
+```</code></pre>
+
+            <div class="tip">
+                <p>💡 If no brain file exists, SAOIS will ask what you're working on and create one automatically!</p>
+            </div>
+
+            <!-- Troubleshooting -->
+            <h2 id="troubleshooting">Troubleshooting</h2>
+
+            <h3>"command not found: saois"</h3>
+            <div class="card">
+                <p><strong>Windows:</strong></p>
+                <ul>
+                    <li>Close and reopen PowerShell</li>
+                    <li>Or run: <code>. $PROFILE</code></li>
+                    <li>Or use: <code>python -m saois.simple_cli help</code></li>
+                </ul>
+                <p><strong>Mac/Linux:</strong></p>
+                <ul>
+                    <li>Run: <code>source ~/.zshrc</code></li>
+                    <li>Or close and reopen Terminal</li>
+                </ul>
+            </div>
+
+            <h3>"Python not found"</h3>
+            <div class="card">
+                <p>Install Python 3.9+ from <a href="https://python.org" style="color: var(--primary)">python.org</a></p>
+                <div class="warning">
+                    <p>⚠️ On Windows, make sure to check "Add Python to PATH" during installation!</p>
+                </div>
+            </div>
+
+            <h3>"No AI tools found"</h3>
+            <div class="card">
+                <p>SAOIS will use browser versions of AI tools if no desktop apps are installed. For the best experience, install:</p>
+                <ul>
+                    <li><a href="https://windsurf.ai" style="color: var(--primary)">Windsurf</a> - AI-powered coding</li>
+                    <li><a href="https://cursor.sh" style="color: var(--primary)">Cursor</a> - AI-first editor</li>
+                    <li><a href="https://code.visualstudio.com" style="color: var(--primary)">VS Code</a> - General coding</li>
+                </ul>
+            </div>
+
+            <h3>"Project not found"</h3>
+            <div class="card">
+                <p>Make sure the project is registered:</p>
+                <pre><code>saois list                    # See all projects
+saois add myproject ~/path    # Add a project</code></pre>
+            </div>
+
+            <h3>Still having issues?</h3>
+            <p>Try running the direct Python command:</p>
+            <pre><code>python -m saois.simple_cli help</code></pre>
+            <p>If this works, the issue is with your shell configuration. Re-run the installer.</p>
+
+        </div>
+    </main>
+
+    <footer>
+        <p><a href="index.html">← Back to Home</a></p>
+        <p style="margin-top: 16px;">SAOIS is open source. <a href="https://github.com/Annedabest/SAOISCLI">View on GitHub</a></p>
+    </footer>
+</body>
+</html>

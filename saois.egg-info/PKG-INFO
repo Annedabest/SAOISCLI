@@ -1,13 +1,13 @@
-Metadata-Version: 2.1
+Metadata-Version: 2.4
 Name: saois
-Version: 0.1.0
-Summary: An innovative 3D animated CLI for managing development projects
-Home-page: UNKNOWN
+Version: 2.0.0
+Summary: AI Development Assistant - Work on any project with the right AI tool
 Author: Anne
-License: UNKNOWN
-Platform: UNKNOWN
-Requires-Python: >=3.7
+Requires-Python: >=3.9
 License-File: LICENSE
-
-UNKNOWN
-
+Requires-Dist: rich>=13.0.0
+Dynamic: author
+Dynamic: license-file
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

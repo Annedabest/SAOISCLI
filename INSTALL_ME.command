@@ -1,99 +1,73 @@
 #!/bin/bash
-# SAOIS CLI - Double-Click Installer for macOS
-# Just double-click this file to install SAOIS!
+# SAOIS - One-Click Installer for macOS
+# Double-click this file to install SAOIS
 
-# Get the directory where this script is located
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+cd "$(dirname "$0")"
 
-clear
 echo ""
-echo "╔══════════════════════════════════════════════════════════════╗"
-echo "║                                                              ║"
-echo "║   ⚡ SAOIS CLI - One-Click Installer ⚡                      ║"
-echo "║                                                              ║"
-echo "║   Smart AI Project Manager                                   ║"
-echo "║                                                              ║"
-echo "╚══════════════════════════════════════════════════════════════╝"
+echo "  ⚡ SAOIS - AI Development Assistant"
+echo "  One-Click Installation"
 echo ""
 
 # Check Python
-echo "🔍 Checking Python..."
 if ! command -v python3 &> /dev/null; then
+    echo "  ❌ Python 3 not found"
+    echo "  Please install Python 3.9+ first"
     echo ""
-    echo "❌ Python 3 not found!"
-    echo ""
-    echo "Please install Python first:"
-    echo "  1. Go to https://python.org/downloads"
-    echo "  2. Download Python 3.9 or newer"
-    echo "  3. Install it"
-    echo "  4. Double-click this file again"
-    echo ""
-    read -p "Press Enter to exit..."
+    echo "  Opening python.org..."
+    open "https://python.org/downloads"
+    read -p "  Press Enter after installing Python..."
     exit 1
 fi
 
-PYTHON_VERSION=$(python3 --version)
-echo "✓ Found: $PYTHON_VERSION"
+echo "  ✓ $(python3 --version)"
+echo "  ✓ Location: $(pwd)"
+
+# Install
 echo ""
+echo "  📦 Installing SAOIS..."
 
-# Install dependencies
-echo "📦 Installing dependencies..."
-cd "$SCRIPT_DIR"
-python3 -m pip install --user -q rich 2>/dev/null
-echo "✓ Dependencies installed"
-echo ""
+python3 -m pip install rich --quiet 2>/dev/null
+python3 -m pip install -e . --quiet 2>/dev/null || python3 -m pip install . --quiet 2>/dev/null
 
-# Install SAOIS package
-echo "🚀 Installing SAOIS package..."
-python3 -m pip install --user -e . 2>/dev/null
-if [ $? -eq 0 ]; then
-    echo "✓ SAOIS package installed"
-else
-    echo "⚠️  Package installation had issues, continuing..."
-fi
-echo ""
+echo "  ✓ Dependencies installed"
 
-# Create symlink for direct access
-echo "� Creating command symlink..."
-mkdir -p /usr/local/bin 2>/dev/null
-ln -sf "$SCRIPT_DIR/saois-cli" /usr/local/bin/saois 2>/dev/null
-
-if [ -L /usr/local/bin/saois ]; then
-    echo "✓ Command symlink created"
-else
-    echo "⚠️  Could not create /usr/local/bin/saois (may need sudo)"
-    echo "   Using alias instead..."
-    python3 -m saois.cli install
-fi
-echo ""
-
-# Verify installation
-echo "✅ Verifying installation..."
-if command -v saois &> /dev/null; then
-    echo "✓ SAOIS is ready to use!"
-    echo "   Type: saois help"
-else
-    echo "⚠️  SAOIS not yet available"
-    echo "   Try: source ~/.zshrc"
+# Add to shell config
+SHELL_RC="$HOME/.zshrc"
+if [ -f "$HOME/.bashrc" ] && [ ! -f "$HOME/.zshrc" ]; then
+    SHELL_RC="$HOME/.bashrc"
 fi
 
-# Success
+if ! grep -q "alias saois=" "$SHELL_RC" 2>/dev/null; then
+    echo "" >> "$SHELL_RC"
+    echo "# SAOIS CLI" >> "$SHELL_RC"
+    echo "alias saois='python3 -m saois.simple_cli'" >> "$SHELL_RC"
+    echo "  ✓ Added 'saois' command to $SHELL_RC"
+else
+    echo "  ✓ 'saois' command ready"
+fi
+
+# Load for current session
+alias saois='python3 -m saois.simple_cli'
+
 echo ""
-echo "════════════════════════════════════════════════════════════════"
+echo "  ========================================"
+echo "  ✅ Installation complete!"
+echo "  ========================================"
 echo ""
-echo "✅ INSTALLATION COMPLETE!"
+echo "  Starting SAOIS setup..."
 echo ""
-echo "════════════════════════════════════════════════════════════════"
+
+# Run setup
+python3 -m saois.simple_cli start
+
 echo ""
-echo "📋 NEXT STEPS:"
+echo "  ========================================"
+echo "  To use SAOIS in new terminals:"
+echo "  ========================================"
 echo ""
-echo "   1. Close this window"
+echo "  1. Close and reopen Terminal"
+echo "  2. Or run: source $SHELL_RC"
+echo "  3. Then type: saois help"
 echo ""
-echo "   2. Open a NEW Terminal window"
-echo "      (Press Cmd+Space, type 'Terminal', press Enter)"
-echo ""
-echo "   3. Type: saois quickstart"
-echo ""
-echo "════════════════════════════════════════════════════════════════"
-echo ""
-read -p "Press Enter to close this window..."
+read -p "  Press Enter to close..."

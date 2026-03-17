@@ -1,3 +1,2 @@
 [console_scripts]
-saois = saois.cli:main
-
+saois = saois.simple_cli:main

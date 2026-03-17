@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAOIS - Your AI Development Assistant</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00ffff;
+            --secondary: #ff00ff;
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --text: #ffffff;
+            --text-dim: #888;
+            --success: #00ff88;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            padding: 80px 24px;
+            background: radial-gradient(ellipse at top, #1a1a2e 0%, var(--bg-dark) 70%);
+        }
+
+        .hero-badge {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 14px;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 24px;
+        }
+
+        .hero h1 {
+            font-size: clamp(48px, 8vw, 80px);
+            font-weight: 700;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, #fff 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero p {
+            font-size: 20px;
+            color: var(--text-dim);
+            max-width: 600px;
+            margin-bottom: 48px;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #00cccc);
+            color: var(--bg-dark);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px rgba(0, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* How It Works */
+        .section {
+            padding: 100px 24px;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 18px;
+            margin-bottom: 64px;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 32px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .step {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .step:hover {
+            border-color: var(--primary);
+            transform: translateY(-4px);
+        }
+
+        .step-number {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--bg-dark);
+            margin-bottom: 20px;
+        }
+
+        .step h3 {
+            font-size: 20px;
+            margin-bottom: 12px;
+        }
+
+        .step p {
+            color: var(--text-dim);
+            font-size: 15px;
+        }
+
+        /* Commands Section */
+        .commands-section {
+            background: var(--bg-card);
+        }
+
+        .commands-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .command {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .command code {
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: var(--primary);
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .command p {
+            color: var(--text-dim);
+            font-size: 14px;
+            margin-top: 8px;
+        }
+
+        /* Demo Section */
+        .demo-section {
+            background: linear-gradient(180deg, var(--bg-dark) 0%, #0f0f1a 100%);
+        }
+
+        .demo-container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .terminal {
+            background: #1a1a2e;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+        }
+
+        .terminal-header {
+            background: #252538;
+            padding: 12px 16px;
+            display: flex;
+            gap: 8px;
+        }
+
+        .terminal-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27ca40; }
+
+        .terminal-body {
+            padding: 24px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .terminal-line {
+            margin-bottom: 8px;
+        }
+
+        .terminal-prompt {
+            color: var(--success);
+        }
+
+        .terminal-command {
+            color: var(--primary);
+        }
+
+        .terminal-output {
+            color: var(--text-dim);
+        }
+
+        /* Features */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 24px;
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        .feature {
+            text-align: center;
+            padding: 32px;
+        }
+
+        .feature-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        .feature h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+        }
+
+        .feature p {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        /* Download Section */
+        .download-section {
+            background: linear-gradient(135deg, #1a1a2e 0%, #0f0f1a 100%);
+            text-align: center;
+        }
+
+        .download-box {
+            background: var(--bg-card);
+            border-radius: 24px;
+            padding: 48px;
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid rgba(0, 255, 255, 0.2);
+        }
+
+        .download-box h3 {
+            font-size: 28px;
+            margin-bottom: 16px;
+        }
+
+        .download-box p {
+            color: var(--text-dim);
+            margin-bottom: 32px;
+        }
+
+        .download-steps {
+            text-align: left;
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 32px;
+        }
+
+        .download-steps ol {
+            padding-left: 24px;
+        }
+
+        .download-steps li {
+            margin-bottom: 12px;
+            color: var(--text-dim);
+        }
+
+        .download-steps code {
+            background: rgba(0, 255, 255, 0.1);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: 'SF Mono', monospace;
+        }
+
+        /* Prompts Section */
+        .prompts-section {
+            background: var(--bg-card);
+        }
+
+        .prompts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .prompt-card {
+            background: var(--bg-dark);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .prompt-card h4 {
+            color: var(--primary);
+            margin-bottom: 12px;
+        }
+
+        .prompt-card p {
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        /* Footer */
+        footer {
+            padding: 48px 24px;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 14px;
+        }
+
+        footer a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 36px;
+            }
+
+            .section {
+                padding: 60px 24px;
+            }
+
+            .cta-buttons {
+                flex-direction: column;
+                width: 100%;
+                max-width: 300px;
+            }
+
+            .btn {
+                width: 100%;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">⚡ AI Development Assistant</div>
+        <h1>SAOIS</h1>
+        <p>Work on any project with the right AI tool, automatically. No setup. No configuration. Just works.</p>
+        <div class="cta-buttons">
+            <a href="#download" class="btn btn-primary">Download Now</a>
+            <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+        </div>
+    </section>
+
+    <!-- How It Works -->
+    <section id="how-it-works" class="section">
+        <div class="container">
+            <h2 class="section-title">How It Works</h2>
+            <p class="section-subtitle">Three simple steps to supercharge your development workflow</p>
+            
+            <div class="steps">
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <h3>Download & Install</h3>
+                    <p>Download SAOIS, double-click INSTALL_ME.bat (Windows) or run install.sh (Mac/Linux). That's it!</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <h3>Run Setup</h3>
+                    <p>Type <code>saois start</code> and SAOIS automatically finds your projects and detects your AI tools.</p>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <h3>Start Working</h3>
+                    <p>Type <code>saois work myproject</code> and SAOIS opens the best AI tool for your task automatically.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Commands -->
+    <section class="section commands-section">
+        <div class="container">
+            <h2 class="section-title">Just 6 Commands</h2>
+            <p class="section-subtitle">That's all you need to remember</p>
+            
+            <div class="commands-grid">
+                <div class="command">
+                    <code>saois start</code>
+                    <p>Quick setup - run this first!</p>
+                </div>
+                <div class="command">
+                    <code>saois work &lt;name&gt;</code>
+                    <p>Start working on a project</p>
+                </div>
+                <div class="command">
+                    <code>saois list</code>
+                    <p>See all your projects</p>
+                </div>
+                <div class="command">
+                    <code>saois add &lt;name&gt; &lt;path&gt;</code>
+                    <p>Add a new project</p>
+                </div>
+                <div class="command">
+                    <code>saois tools</code>
+                    <p>Check your AI tools</p>
+                </div>
+                <div class="command">
+                    <code>saois help</code>
+                    <p>Show help</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Demo -->
+    <section class="section demo-section">
+        <div class="container">
+            <h2 class="section-title">See It In Action</h2>
+            <p class="section-subtitle">Watch how SAOIS transforms your workflow</p>
+            
+            <!-- Demo 1: Setup -->
+            <div class="demo-container" style="margin-bottom: 48px;">
+                <h3 style="color: var(--primary); margin-bottom: 16px; text-align: center;">1. One-Time Setup (30 seconds)</h3>
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span> <span class="terminal-command">saois start</span>
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ⚡ SAOIS - Let's get you started!
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Found: ~/Documents/AI_PROJECTS
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Found 12 projects, imported 12 new
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ 3 AI tools ready (Windsurf, Claude, Perplexity)
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Setup complete!
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo 2: Working on Code -->
+            <div class="demo-container" style="margin-bottom: 48px;">
+                <h3 style="color: var(--primary); margin-bottom: 16px; text-align: center;">2. Start Coding → Opens Windsurf</h3>
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span> <span class="terminal-command">saois work my-website</span>
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            🚀 Starting Work
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Project: my-website
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Task: code
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Windsurf is ready!
+                        </div>
+                        <div class="terminal-line terminal-output" style="color: var(--text-dim); font-style: italic;">
+                            → Windsurf opens with your project loaded
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo 3: Research -->
+            <div class="demo-container" style="margin-bottom: 48px;">
+                <h3 style="color: var(--primary); margin-bottom: 16px; text-align: center;">3. Need Research? → Opens Perplexity</h3>
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span> <span class="terminal-command">saois work api-research</span>
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            🚀 Starting Work
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Project: api-research
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Task: research
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Perplexity is ready!
+                        </div>
+                        <div class="terminal-line terminal-output" style="color: var(--text-dim); font-style: italic;">
+                            → Perplexity opens for research tasks
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Demo 4: Planning -->
+            <div class="demo-container">
+                <h3 style="color: var(--primary); margin-bottom: 16px; text-align: center;">4. Planning Architecture? → Opens Claude</h3>
+                <div class="terminal">
+                    <div class="terminal-header">
+                        <div class="terminal-dot red"></div>
+                        <div class="terminal-dot yellow"></div>
+                        <div class="terminal-dot green"></div>
+                    </div>
+                    <div class="terminal-body">
+                        <div class="terminal-line">
+                            <span class="terminal-prompt">$</span> <span class="terminal-command">saois work system-design</span>
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            🚀 Starting Work
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Project: system-design
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            Task: plan
+                        </div>
+                        <div class="terminal-line terminal-output">
+                            ✓ Claude is ready!
+                        </div>
+                        <div class="terminal-line terminal-output" style="color: var(--text-dim); font-style: italic;">
+                            → Claude opens for planning & architecture
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="text-align: center; margin-top: 48px; color: var(--text-dim);">
+                <strong style="color: var(--primary);">That's it!</strong> SAOIS reads your project brain and picks the right tool automatically.
+            </p>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Why SAOIS?</h2>
+            <p class="section-subtitle">Built for developers who work on multiple projects</p>
+            
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">🎯</div>
+                    <h3>Smart Routing</h3>
+                    <p>Automatically picks the right AI tool for your task - coding, research, or planning.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">⚡</div>
+                    <h3>Zero Config</h3>
+                    <p>Works out of the box. No complex setup, no configuration files to edit.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Multi-Project</h3>
+                    <p>Switch between projects instantly. SAOIS remembers where you left off.</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>Everything runs locally. No data collection, no telemetry, no cloud.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Prompts -->
+    <section class="section prompts-section">
+        <div class="container">
+            <h2 class="section-title">Built-in Prompt Templates</h2>
+            <p class="section-subtitle">Get started faster with pre-made prompts for common tasks</p>
+            
+            <div class="prompts-grid">
+                <div class="prompt-card">
+                    <h4>🐛 Debug Helper</h4>
+                    <p>Structured prompt for debugging issues with context about your project and error.</p>
+                </div>
+                <div class="prompt-card">
+                    <h4>📝 Code Review</h4>
+                    <p>Get thorough code reviews with suggestions for improvements and best practices.</p>
+                </div>
+                <div class="prompt-card">
+                    <h4>🏗️ Architecture</h4>
+                    <p>Plan your project structure with prompts designed for system design.</p>
+                </div>
+                <div class="prompt-card">
+                    <h4>📚 Documentation</h4>
+                    <p>Generate clear documentation for your code, APIs, and user guides.</p>
+                </div>
+            </div>
+            
+            <p style="text-align: center; margin-top: 32px; color: var(--text-dim);">
+                Create your own templates in <code style="color: var(--primary);">docs/templates/</code>
+            </p>
+        </div>
+    </section>
+
+    <!-- Download -->
+    <section id="download" class="section download-section">
+        <div class="container">
+            <div class="download-box">
+                <h3>Get SAOIS</h3>
+                <p>Free, open-source, and ready to use in 30 seconds.</p>
+                
+                <div class="download-steps">
+                    <ol>
+                        <li>Download and extract the ZIP file</li>
+                        <li><strong>Windows:</strong> Double-click <code>INSTALL_ME.bat</code></li>
+                        <li><strong>Mac/Linux:</strong> Run <code>./scripts/install.sh</code></li>
+                        <li>Type <code>saois start</code> and you're ready!</li>
+                    </ol>
+                </div>
+                
+                <a href="https://github.com/Annedabest/SAOISCLI/releases/latest/download/SAOISCLI.zip" class="btn btn-primary" style="display: inline-block;">
+                    Download SAOIS
+                </a>
+                
+                <p style="margin-top: 24px; font-size: 13px;">
+                    Or clone: <code>git clone https://github.com/Annedabest/SAOISCLI.git</code>
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Supported Tools -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Works With Your Tools</h2>
+            <p class="section-subtitle">SAOIS automatically detects and uses these AI tools</p>
+            
+            <div class="features-grid">
+                <div class="feature">
+                    <div class="feature-icon">🌊</div>
+                    <h3>Windsurf</h3>
+                    <p>AI-powered coding</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">📝</div>
+                    <h3>Cursor</h3>
+                    <p>AI-first editor</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💻</div>
+                    <h3>VS Code</h3>
+                    <p>General coding</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🧠</div>
+                    <h3>Claude</h3>
+                    <p>Planning & architecture</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">💬</div>
+                    <h3>ChatGPT</h3>
+                    <p>General AI help</p>
+                </div>
+                <div class="feature">
+                    <div class="feature-icon">🔍</div>
+                    <h3>Perplexity</h3>
+                    <p>Research & learning</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Advanced Features -->
+    <section class="section" style="background: var(--bg-card);">
+        <div class="container">
+            <h2 class="section-title">Power User Features</h2>
+            <p class="section-subtitle">Get the most out of SAOIS</p>
+            
+            <div class="steps" style="max-width: 100%;">
+                <!-- Project Brain -->
+                <div class="step">
+                    <div class="step-number">🧠</div>
+                    <h3>Project Brain</h3>
+                    <p>Each project has a "brain" file (<code>docs/project_brain.md</code>) that tells SAOIS what you're working on.</p>
+                    <pre style="background: var(--bg-dark); padding: 16px; border-radius: 8px; margin-top: 12px; font-size: 12px; overflow-x: auto;"><code># My Project Brain
+
+**Task Type:** code
+**Current Task:** Add user authentication
+
+## How to Run
+npm run dev</code></pre>
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-dim);">SAOIS auto-creates this on first use. Just update the task type when switching tasks!</p>
+                </div>
+
+                <!-- AI Rules -->
+                <div class="step">
+                    <div class="step-number">📋</div>
+                    <h3>AI Rules</h3>
+                    <p>Add <code>.ai_rules.md</code> to your project root to set guardrails for AI assistants.</p>
+                    <pre style="background: var(--bg-dark); padding: 16px; border-radius: 8px; margin-top: 12px; font-size: 12px; overflow-x: auto;"><code># AI Rules for This Project
+
+- Use TypeScript, not JavaScript
+- Follow existing code style
+- Don't modify package.json
+- Always add tests for new code</code></pre>
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-dim);">AI tools will read these rules and follow them automatically.</p>
+                </div>
+
+                <!-- Prompt Templates -->
+                <div class="step">
+                    <div class="step-number">💬</div>
+                    <h3>Prompt Templates</h3>
+                    <p>Use built-in templates or create your own in <code>docs/templates/</code>.</p>
+                    <pre style="background: var(--bg-dark); padding: 16px; border-radius: 8px; margin-top: 12px; font-size: 12px; overflow-x: auto;"><code># Debug Helper Template
+
+## Error
+[Paste error here]
+
+## What I Tried
+[What you've attempted]
+
+## Context
+[Relevant code or info]</code></pre>
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-dim);">Copy templates into your AI tool for structured, effective prompts.</p>
+                </div>
+
+                <!-- Tools Setup -->
+                <div class="step">
+                    <div class="step-number">🔧</div>
+                    <h3>Tools Setup</h3>
+                    <p>SAOIS auto-detects your AI tools. Check what's available:</p>
+                    <pre style="background: var(--bg-dark); padding: 16px; border-radius: 8px; margin-top: 12px; font-size: 12px; overflow-x: auto;"><code>$ saois tools
+
+AI Tools
+┌──────────┬─────────┬──────────────────┐
+│ Tool     │ Status  │ Best For         │
+├──────────┼─────────┼──────────────────┤
+│ Windsurf │ ✓ Ready │ Coding with AI   │
+│ Claude   │ ✓ Ready │ Planning         │
+│ Cursor   │ Not installed │ AI editing │
+└──────────┴─────────┴──────────────────┘</code></pre>
+                    <p style="margin-top: 12px; font-size: 13px; color: var(--text-dim);">Install more tools for better task routing options.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Uninstall -->
+    <section class="section">
+        <div class="container">
+            <h2 class="section-title">Easy Uninstall</h2>
+            <p class="section-subtitle">Changed your mind? No problem.</p>
+            
+            <div class="download-box" style="max-width: 600px; margin: 0 auto; background: var(--bg-card);">
+                <h3 style="color: var(--text);">One Command Uninstall</h3>
+                <pre style="background: var(--bg-dark); padding: 20px; border-radius: 8px; margin: 24px 0; text-align: left;"><code style="color: var(--primary);">pip uninstall saois -y</code></pre>
+                <p style="color: var(--text-dim); font-size: 14px;">That's it! SAOIS is completely removed.</p>
+                <p style="color: var(--text-dim); font-size: 13px; margin-top: 16px;">Your projects and files are never touched - SAOIS only manages its own registry.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <p>SAOIS is open source. <a href="https://github.com/Annedabest/SAOISCLI">View on GitHub</a></p>
+        <p style="margin-top: 8px;">Made with ⚡ for developers everywhere</p>
+    </footer>
+</body>
+</html>
