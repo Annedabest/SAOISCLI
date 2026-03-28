@@ -102,18 +102,38 @@ def open_url(url, os_type):
     except:
         return False
 
+DISPLAY_NAME_TO_TOOL_ID = {
+    "Windsurf": "windsurf",
+    "Cursor": "cursor",
+    "VS Code": "vscode",
+    "Claude": "claude",
+    "ChatGPT": "chatgpt",
+    "Cody": "cody",
+    "Continue": "continue",
+}
+
+
 def check_tool_installed(tool_command):
     """Check if a tool is installed by looking for CLI binary or macOS app."""
+    tool_id = DISPLAY_NAME_TO_TOOL_ID.get(tool_command)
+    if tool_id:
+        try:
+            from saois.core.config import config
+
+            return config.is_tool_installed(tool_id)
+        except Exception:
+            pass
+
     if shutil.which(tool_command):
         return True
-    
+
     os_type = get_os()
     if os_type == "macos":
         app_paths = MAC_APP_PATHS.get(tool_command, [])
         for path in app_paths:
             if Path(path).exists():
                 return True
-    
+
     return False
 
 def load_settings():

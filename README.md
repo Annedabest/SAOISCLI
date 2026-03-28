@@ -2,7 +2,7 @@
 
 **Your AI Development Assistant** - Work on any project with the right AI tool, automatically.
 
-[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/Annedabest/SAOISCLI/releases)
+[![Version](https://img.shields.io/badge/version-2.0.0-blue.svg)](https://github.com/Annedabest/SAOISCLI)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Website](https://img.shields.io/badge/website-saois.cli.victorconsultancy.cloud-cyan.svg)](https://saois.cli.victorconsultancy.cloud)
 
@@ -37,25 +37,27 @@ source ~/.zshrc
 saois start
 ```
 
-## 6 Commands You Need
+## Commands (start here, then shortcuts)
 
 | Command | What it does |
 |---------|--------------|
 | `saois start` | Quick setup (run this first!) |
-| `saois work myapp` | Start working on a project |
+| `saois work myapp` | Open the best tool for your task (desktop app if detected, otherwise the tool’s website—see message) |
 | `saois list` | See all your projects |
 | `saois add myapp ~/path` | Add a new project |
-| `saois tools` | Check your AI tools |
-| `saois help` | Show help |
+| `saois tools` | Check your AI tools (`saois tools --verbose` shows what matched) |
+| `saois prompts` | List or show built-in AI prompt templates |
+| `saois suggest myapp` | Show brain-based next steps without launching a tool |
+| `saois help` | Show this help |
 
-**That's it.** Just 6 commands to remember.
+The essentials are still **start → work → list**; the rest are optional power-user commands.
 
 ## How It Works
 
 1. **You run:** `saois work myproject`
 2. **SAOIS:** Reads your project, figures out what you're working on
-3. **SAOIS:** Launches the best AI tool (Windsurf for coding, Claude for planning, etc.)
-4. **You:** Start working with full AI assistance
+3. **SAOIS:** Launches the best desktop AI tool when it can detect one; otherwise it opens the vendor site in your browser and says so explicitly.
+4. **You:** Continue in the IDE or open the project folder from the path SAOIS prints.
 
 ## Example Workflow
 
@@ -66,7 +68,18 @@ saois start
 # Start working on a project
 saois work my-website
 
-# SAOIS opens Windsurf with your project ready!
+# If Windsurf (or Cursor/VS Code) is installed, SAOIS opens it with the folder; otherwise check the on-screen note (browser fallback).
+```
+
+## Verify install (developers)
+
+Use the same Python you develop with (including **Xcode’s** `/usr/bin/python3` on macOS):
+
+```bash
+cd /path/to/SAOISCLI
+python3 -m pip install -e ".[dev]"
+python3 -m pytest tests/ -v
+python3 -m pip wheel . -w /tmp/saois_wheel --no-deps   # wheel should contain saois/ and templates/, not tests/
 ```
 
 ## Features
@@ -102,9 +115,9 @@ SAOIS automatically uses whatever you have installed.
 - Restart your terminal
 - Or run: `source ~/.zshrc`
 
-**"No AI tools found"**
-- SAOIS will open browser versions instead
-- Install Windsurf or Cursor for best experience
+**"No AI tools found" / `saois tools` shows 0/6**
+- Run `saois tools --verbose` to see why each tool was skipped (path vs `PATH`)
+- Install Windsurf, Cursor, or VS Code for desktop launches; without them, `saois work` still runs but may open vendor sites instead of an IDE
 
 ## License
 

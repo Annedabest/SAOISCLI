@@ -526,14 +526,17 @@ def list_prompt_templates():
             console.print(f"  [#00ffff]{template['name']}[/#00ffff]")
             console.print(f"    [dim]{template['description']}[/dim]")
     
-    console.print(f"\n[dim]💡 Use 'saois prompts <name>' to view a specific template[/dim]")
+    console.print("\n[dim]💡 Use `saois prompts <name>` to view a specific template[/dim]")
     console.print(f"[dim]💡 Use 'saois prompts browse' for interactive selection[/dim]")
 
 def browse_prompts():
     """Interactive prompt template browser."""
-    from .cli import show_header, load_projects
-    
-    show_header()
+    try:
+        from .core.ui import ui
+
+        ui.header()
+    except Exception:
+        pass
     console.print("[bold #00ffff]🔍 Browse Prompt Templates[/bold #00ffff]\n")
     
     # Create table
@@ -566,16 +569,20 @@ def browse_prompts():
 
 def show_prompt_template(template_key, project_name=None, project_path=None):
     """Display a specific prompt template."""
-    from .cli import show_header, load_projects
-    from pathlib import Path
-    
+    try:
+        from .core.ui import ui
+        from .core.registry import registry
+
+        ui.header()
+    except Exception:
+        pass
+
     if template_key not in PROMPT_TEMPLATES:
         console.print(f"[red]Template '{template_key}' not found[/red]")
         list_prompt_templates()
         return
     
     template = PROMPT_TEMPLATES[template_key]
-    show_header()
     
     console.print(f"[bold #00ffff]{template['name']}[/bold #00ffff]\n")
     console.print(f"[dim]Category: {template['category']}[/dim]")
@@ -583,7 +590,12 @@ def show_prompt_template(template_key, project_name=None, project_path=None):
     
     # Get project context if not provided
     if not project_name:
-        projects = load_projects()
+        try:
+            from .core.registry import registry
+
+            projects = registry.get_all()
+        except Exception:
+            projects = {}
         if projects:
             console.print("[dim]Select a project to customize this prompt:[/dim]")
             project_list = list(projects.items())

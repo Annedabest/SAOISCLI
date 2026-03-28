@@ -152,7 +152,7 @@ cat ~/.saois/validation_log.txt
 
 ```bash
 # SAOIS CLI - Secure setup
-alias saois='python3 -m saois.cli'
+alias saois='python3 -m saois.simple_cli'
 
 # Optional: Restrict SAOIS to specific folder
 export SAOIS_PROJECTS_ROOT="/Volumes/AI-DATA/AI_PROJECTS"

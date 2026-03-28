@@ -1,2 +1,3 @@
 [console_scripts]
 saois = saois.simple_cli:main
+

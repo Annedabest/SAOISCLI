@@ -16,10 +16,19 @@ Instead of manually opening tools, SAOIS reads your project's "brain" and opens:
 ### Step 1: Install SAOIS CLI
 
 ```bash
-cd /Volumes/AI-DATA/BuildEasy/SAOISCLI
-./install.sh
+cd /path/to/SAOISCLI
+./scripts/install.sh
 source ~/.zshrc
 ```
+
+## Configuration files (`~/.saois/`)
+
+| File | Purpose |
+|------|---------|
+| `settings.json` | `ai_projects_path`: folder SAOIS scans for projects (can be any path you confirmed during `saois start`). |
+| `projects.json` | Registry of project names → absolute paths. |
+
+Set `SAOIS_SKIP_PROJECT_GUARD=1` in your environment only if you intentionally use a very large folder (e.g. a whole volume) and want to skip the volume/crowd warning during `saois start`.
 
 ### Step 2: Create AI_PROJECTS Folder
 

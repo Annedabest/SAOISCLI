@@ -74,10 +74,10 @@ class TestRegistry:
         registry = Registry()
         assert registry is not None
     
-    def test_add_and_get_project(self):
+    def test_add_and_get_project(self, isolated_registry):
         """Should add and retrieve projects."""
-        registry = Registry()
-        
+        registry = isolated_registry
+
         # Add project
         registry.add("test_project", self.test_project)
         
@@ -86,23 +86,36 @@ class TestRegistry:
         assert path is not None
         assert path.name == "test_project"
     
-    def test_project_exists(self):
+    def test_project_exists(self, isolated_registry):
         """Should check if project exists."""
-        registry = Registry()
+        registry = isolated_registry
         registry.add("test_project", self.test_project)
         
         assert registry.exists("test_project") == True
         assert registry.exists("nonexistent") == False
     
-    def test_remove_project(self):
+    def test_remove_project(self, isolated_registry):
         """Should remove projects."""
-        registry = Registry()
+        registry = isolated_registry
         registry.add("test_project", self.test_project)
         
         assert registry.exists("test_project") == True
         registry.remove("test_project")
         assert registry.exists("test_project") == False
     
+    def test_import_projects_counts_new_and_existing(self, isolated_registry):
+        """import_projects returns (new_count, already_registered_count)."""
+        registry = isolated_registry
+        registry.add("existing", self.test_project)
+        found = {
+            "existing": str(self.test_project),
+            "brand_new": str(Path(self.temp_dir) / "brand_new"),
+        }
+        (Path(self.temp_dir) / "brand_new").mkdir()
+        new_ct, skip_ct = registry.import_projects(found)
+        assert new_ct == 1
+        assert skip_ct == 1
+
     def test_scan_folder(self):
         """Should scan folder for projects."""
         registry = Registry()
@@ -118,9 +131,9 @@ class TestRegistry:
         assert "project2" in found
         assert ".hidden" not in found
     
-    def test_search_projects(self):
+    def test_search_projects(self, isolated_registry):
         """Should search projects by name."""
-        registry = Registry()
+        registry = isolated_registry
         registry.add("my_app", self.test_project)
         registry.add("my_website", self.test_project)
         registry.add("other", self.test_project)
@@ -130,9 +143,9 @@ class TestRegistry:
         assert "my_website" in results
         assert "other" not in results
     
-    def test_validate_projects(self):
+    def test_validate_projects(self, isolated_registry):
         """Should validate project paths."""
-        registry = Registry()
+        registry = isolated_registry
         registry.add("valid", self.test_project)
         registry.add("invalid", Path("/nonexistent/path"))
         
@@ -245,15 +258,12 @@ class TestIntegration:
         import shutil
         shutil.rmtree(self.temp_dir, ignore_errors=True)
     
-    def test_full_workflow(self):
+    def test_full_workflow(self, isolated_registry):
         """Test complete workflow: add project, create brain, get tool."""
-        from saois.core.config import config
-        from saois.core.registry import Registry
         from saois.core.brain import Brain
         from saois.core.router import Router
-        
-        # Add project
-        registry = Registry()
+
+        registry = isolated_registry
         registry.add("my_project", self.project_path)
         
         # Create brain

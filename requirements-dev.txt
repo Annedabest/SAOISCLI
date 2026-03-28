@@ -1,4 +1,2 @@
 rich>=13.0.0
-
-[dev]
 pytest>=7.0

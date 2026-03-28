@@ -1,3 +1,19 @@
+# SAOIS CLI — Changelog
+
+## 2.0.0+ (simple CLI hardening, March 2026)
+
+- **Tool detection:** Single source in `saois.core.config` — VS Code via `code` / bundle paths, Windsurf alternate macOS bundles, ChatGPT `.app` path.
+- **Honest launches:** `saois work` distinguishes desktop IDE vs browser fallback; messages include the project path when opening URLs.
+- **Projects folder guard:** Warns on `/Volumes/...` roots or many sibling folders unless `SAOIS_SKIP_PROJECT_GUARD=1`.
+- **Registry:** Auto-discovered folders from the projects path are persisted; `import_projects` returns `(new, already_registered)` for clearer copy.
+- **Brain:** Resolves `project_brain.md` under `docs/` or shallow tree; packaged template `saois/templates/project_brain_template.md`.
+- **Commands:** `saois prompts`, `saois suggest`, `saois tools --verbose`; help updated.
+- **Entry points:** `saois-cli` and install aliases use `saois.simple_cli`. `python -m saois.cli` prints a legacy warning.
+- **Deploy:** Coolify/Docker healthcheck uses `wget` (nginx:alpine).
+- **CI:** GitHub Actions runs pytest on Linux, macOS, Windows.
+
+---
+
 # 🚀 SAOIS CLI - Major Improvements (March 2026)
 
 ## Summary of Changes

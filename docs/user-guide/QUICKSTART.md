@@ -36,7 +36,7 @@ This does everything automatically:
 saois work myproject
 ```
 
-SAOIS opens the right AI tool for your task. That's it!
+If a desktop IDE is installed, SAOIS launches it with your project folder. If not, it opens the tool’s website in your browser and tells you so—install the app for full one-click opens.
 
 ---
 
@@ -45,10 +45,12 @@ SAOIS opens the right AI tool for your task. That's it!
 | Command | What it does |
 |---------|--------------|
 | `saois start` | Quick setup |
-| `saois work <name>` | Start working |
+| `saois work <name>` | Start working (IDE or browser fallback) |
 | `saois list` | See projects |
 | `saois add <name> <path>` | Add project |
-| `saois tools` | Check AI tools |
+| `saois tools` | Check AI tools (`--verbose` shows detection) |
+| `saois prompts` | List / show AI prompt templates |
+| `saois suggest <name>` | Brain-based next steps only |
 | `saois help` | Show help |
 
 ---
@@ -60,9 +62,9 @@ SAOIS opens the right AI tool for your task. That's it!
 saois start
 
 # Every day
-saois work my-website    # Opens Windsurf
-saois work research      # Opens Perplexity
-saois work planning      # Opens Claude
+saois work my-website    # e.g. Windsurf / Cursor when installed
+saois work research      # Perplexity / ChatGPT chain
+saois work planning      # Claude / ChatGPT chain
 ```
 
 ---
@@ -77,5 +79,5 @@ saois work planning      # Opens Claude
 - Run: `saois add myapp ~/path/to/project`
 
 **"AI tool not opening"**
-- SAOIS will open browser version instead
-- Install Windsurf/Cursor for best experience
+- CLI will say if it opened the website instead of the app; use `saois tools --verbose` to see detection
+- Install Windsurf/Cursor/VS Code for desktop launches

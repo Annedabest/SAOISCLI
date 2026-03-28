@@ -144,7 +144,7 @@ class UI:
         console.print(table)
     
     @staticmethod
-    def tool_status(tools: Dict[str, bool]):
+    def tool_status(tools: Dict[str, bool], tool_names: Optional[Dict[str, str]] = None):
         """Show AI tools status."""
         table = Table(
             title=f"[bold {UI.PRIMARY}]AI Tools[/bold {UI.PRIMARY}]",
@@ -167,10 +167,11 @@ class UI:
             "perplexity": "Research & learning",
         }
         
-        for tool, installed in tools.items():
+        for tool_id, installed in tools.items():
             status = f"[{UI.SUCCESS}]✓ Ready[/{UI.SUCCESS}]" if installed else f"[{UI.DIM}]Not installed[/{UI.DIM}]"
-            purpose = tool_purposes.get(tool, "")
-            table.add_row(tool.title(), status, purpose)
+            purpose = tool_purposes.get(tool_id, "")
+            label = tool_names.get(tool_id, tool_id) if tool_names else tool_id.replace("_", " ").title()
+            table.add_row(label, status, purpose)
         
         console.print(table)
         
@@ -205,7 +206,9 @@ class UI:
             ("work <name>", "Start working on a project", "saois work myapp"),
             ("list", "See all your projects", "saois list"),
             ("add <name> <path>", "Add a new project", "saois add myapp ~/projects/myapp"),
-            ("tools", "Check your AI tools", "saois tools"),
+            ("tools", "Check your AI tools (`--verbose` for detection detail)", "saois tools"),
+            ("prompts [name]", "List or show AI prompt templates", "saois prompts"),
+            ("suggest <name>", "Show brain-based next steps (no launch)", "saois suggest myapp"),
             ("help", "Show this help", "saois help"),
         ]
         

@@ -766,7 +766,7 @@ def install_cli():
     CONFIG_DIR.mkdir(parents=True, exist_ok=True)
     
     shell_rc = Path.home() / ".zshrc"
-    alias_line = "alias saois='python3 -m saois.cli'"
+    alias_line = "alias saois='python3 -m saois.simple_cli'"
     
     with console.status("[#00ffff]Installing...[/#00ffff]", spinner="dots"):
         time.sleep(0.5)
@@ -1547,6 +1547,12 @@ def uninstall_cli():
     console.print("\n[green]✓ System is clean - no SAOIS traces remaining[/green]")
 
 def main():
+    if os.environ.get("SAOIS_SUPPRESS_LEGACY_CLI_WARNING") != "1":
+        print(
+            "saois: use the `saois` command (saois.simple_cli). "
+            "`python -m saois.cli` is legacy and may be removed.",
+            file=sys.stderr,
+        )
     parser = argparse.ArgumentParser(
         description="⚡ SAOIS - Futuristic CLI for managing development projects",
         formatter_class=argparse.RawDescriptionHelpFormatter

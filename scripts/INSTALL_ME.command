@@ -63,7 +63,7 @@ if [ -L /usr/local/bin/saois ]; then
 else
     echo "⚠️  Could not create /usr/local/bin/saois (may need sudo)"
     echo "   Using alias instead..."
-    python3 -m saois.cli install
+    echo "Add this to your shell config: alias saois='python3 -m saois.simple_cli'"
 fi
 echo ""
 

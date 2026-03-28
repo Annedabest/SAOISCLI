@@ -10,9 +10,9 @@ build:
 ports:
   - 80
 
-# Health check
+# Health check (nginx:alpine includes wget; curl may be missing)
 healthcheck:
-  test: ["CMD", "curl", "-f", "http://localhost/"]
+  test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/"]
   interval: 30s
   timeout: 10s
   retries: 3

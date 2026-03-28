@@ -16,20 +16,24 @@ class Registry:
     
     def _load(self):
         """Load projects from file and auto-discover."""
-        # Load saved projects
         if config.PROJECTS_FILE.exists():
             try:
                 self._projects = json.loads(config.PROJECTS_FILE.read_text())
-            except:
+            except Exception:
                 self._projects = {}
-        
-        # Auto-discover from AI_PROJECTS folder
+        else:
+            self._projects = {}
+
+        merged_new = False
         ai_path = config.get_ai_projects_path()
         if ai_path and ai_path.exists():
             for item in ai_path.iterdir():
-                if item.is_dir() and not item.name.startswith('.'):
+                if item.is_dir() and not item.name.startswith("."):
                     if item.name not in self._projects:
                         self._projects[item.name] = str(item)
+                        merged_new = True
+        if merged_new:
+            self.save()
     
     def save(self):
         """Save projects to file."""
@@ -89,15 +93,18 @@ class Registry:
                     found[item.name] = str(item)
         return found
     
-    def import_projects(self, projects: Dict[str, str]) -> int:
-        """Import multiple projects, return count of new imports."""
-        count = 0
+    def import_projects(self, projects: Dict[str, str]) -> Tuple[int, int]:
+        """Import multiple projects. Returns (newly_added_count, already_present_count)."""
+        new_count = 0
+        skipped = 0
         for name, path in projects.items():
             if name not in self._projects:
                 self._projects[name] = path
-                count += 1
+                new_count += 1
+            else:
+                skipped += 1
         self.save()
-        return count
+        return new_count, skipped
     
     def search(self, query: str) -> List[str]:
         """Search projects by name."""

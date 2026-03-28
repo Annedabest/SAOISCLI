@@ -1,3 +1,5 @@
+> **Canonical template in the package:** `saois/templates/project_brain_template.md` (used when you run `saois work` and create a brain). You can still use this ALL_CAPS layout; SAOIS parses both styles.
+
 PROJECT NAME:
 [Your project name here]
 
@@ -23,7 +25,7 @@ RUN COMMANDS:
 [  - make run]
 
 NEXT TASK TYPE:
-[Choose one: coding | research | architecture | debugging | analysis | planning | automation]
+[Choose one: code | research | plan — or legacy: coding | architecture | planning | …]
 
 NEXT TASK:
 [Detailed list of everything that needs to be done in this task]

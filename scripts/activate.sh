@@ -6,7 +6,7 @@
 export PATH="$HOME/Library/Python/3.9/bin:$PATH"
 
 # Create alias for current session
-alias saois='python3 -m saois.cli'
+alias saois='python3 -m saois.simple_cli'
 
 echo "✓ SAOIS activated for this session!"
 echo ""

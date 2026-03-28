@@ -28,5 +28,4 @@ saois/core/config.py
 saois/core/registry.py
 saois/core/router.py
 saois/core/ui.py
-tests/__init__.py
-tests/test_core.py
+saois/templates/project_brain_template.md
