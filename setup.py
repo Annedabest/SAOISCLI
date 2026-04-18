@@ -5,7 +5,8 @@ setup(
     version="2.0.0",
     # Do not ship tests/ as an installable package (find_packages would pick it up via tests/__init__.py).
     packages=find_packages(exclude=["tests", "tests.*"]),
-    package_data={"saois": ["templates/*.md"]},
+    package_data={"saois": ["templates/*.md", "experts/*.md"]},
+    include_package_data=True,
     install_requires=[
         "rich>=13.0.0",
     ],

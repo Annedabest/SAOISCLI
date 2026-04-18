@@ -367,6 +367,33 @@ def cmd_prompts(template_arg: Optional[str]):
     show_prompt_template(template_arg)
 
 
+def cmd_experts(args):
+    """Manage expert personas for AI tools."""
+    from ..experts_cli import list_experts, install_experts, show_expert, browse_experts
+    
+    action = args[0] if args else "list"
+    
+    if action == "list":
+        list_experts()
+    elif action == "browse":
+        browse_experts()
+    elif action == "install":
+        project_name = args[1] if len(args) > 1 else None
+        specific = None
+        for i, a in enumerate(args):
+            if a == "--only" and i + 1 < len(args):
+                specific = args[i + 1].split(",")
+        install_experts(project_name=project_name, specific_experts=specific)
+    elif action == "show":
+        if len(args) > 1:
+            show_expert(args[1])
+        else:
+            list_experts()
+    else:
+        # Treat as direct trigger: saois experts ui_ux_designer
+        show_expert(action)
+
+
 def cmd_run(name: str):
     cmd_work(name)
 
@@ -447,6 +474,9 @@ def run_command(args):
     elif command == "prompts":
         sub = args[2] if len(args) > 2 else None
         cmd_prompts(sub)
+
+    elif command == "experts":
+        cmd_experts(args[2:] if len(args) > 2 else [])
 
     else:
         if registry.exists(command):

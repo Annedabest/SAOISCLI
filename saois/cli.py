@@ -131,6 +131,7 @@ def show_help():
     help_table.add_row("config-tools", "Configure your AI tools", "saois config-tools")
     help_table.add_row("menu", "Interactive menu (easy mode)", "saois menu")
     help_table.add_row("prompts [name]", "Browse AI prompt templates", "saois prompts browse")
+    help_table.add_row("experts [action]", "Expert personas for @ mentions", "saois experts install")
     help_table.add_row("open <name>", "Open project folder", "saois open myapp")
     help_table.add_row("remove <name>", "Remove a project", "saois remove myapp")
     help_table.add_row("git-push <name>", "Commit & push to GitHub", "saois git-push myapp")
@@ -1601,6 +1602,11 @@ def main():
     prompts_parser = subparsers.add_parser("prompts", help="Browse AI prompt templates")
     prompts_parser.add_argument("template", nargs="?", help="Template name or 'browse'")
     
+    experts_parser = subparsers.add_parser("experts", help="Expert personas for AI tools (@ mentions)")
+    experts_parser.add_argument("action", nargs="?", default="list", help="list, install, show, browse")
+    experts_parser.add_argument("target", nargs="?", help="Project name or expert trigger")
+    experts_parser.add_argument("--only", help="Comma-separated list of specific experts to install")
+    
     args = parser.parse_args()
     
     if args.command == "help":
@@ -1647,7 +1653,6 @@ def main():
         cmd = show_interactive_menu()
         if cmd:
             # Re-run with the selected command
-            import sys
             sys.argv = ['saois', cmd]
             main()
     elif args.command == "prompts":
@@ -1659,6 +1664,25 @@ def main():
                 show_prompt_template(args.template)
         else:
             list_prompt_templates()
+    elif args.command == "experts":
+        from .experts_cli import list_experts, install_experts, show_expert, browse_experts
+        action = args.action or "list"
+        
+        if action == "list":
+            list_experts()
+        elif action == "browse":
+            browse_experts()
+        elif action == "install":
+            specific = args.only.split(",") if args.only else None
+            install_experts(project_name=args.target, specific_experts=specific)
+        elif action == "show":
+            if args.target:
+                show_expert(args.target)
+            else:
+                list_experts()
+        else:
+            # Maybe they passed a trigger directly: saois experts ui_ux_designer
+            show_expert(action)
     else:
         show_help()
 

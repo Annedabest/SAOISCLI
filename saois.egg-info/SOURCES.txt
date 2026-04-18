@@ -5,12 +5,14 @@ saois/__init__.py
 saois/ai_tool_installer.py
 saois/cli.py
 saois/dependency_checker.py
+saois/experts_cli.py
 saois/github_helper.py
 saois/github_integration.py
 saois/helpers.py
 saois/installer.py
 saois/os_detector.py
 saois/prompt_library.py
+saois/prompt_library_old.py
 saois/simple_cli.py
 saois/tool_config.py
 saois/tool_router.py
