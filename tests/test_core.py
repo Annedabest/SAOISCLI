@@ -144,15 +144,32 @@ class TestRegistry:
         assert "other" not in results
     
     def test_validate_projects(self, isolated_registry):
-        """Should validate project paths."""
+        """Should validate project paths and detect missing ones."""
         registry = isolated_registry
         registry.add("valid", self.test_project)
-        registry.add("invalid", Path("/nonexistent/path"))
+        
+        # Simulate a project that was moved/deleted by manipulating the registry directly
+        registry._projects["missing"] = "/nonexistent/path/deleted_project"
+        registry.save()
         
         valid, missing = registry.validate()
         
         assert "valid" in valid
-        assert "invalid" in missing
+        assert "missing" in missing
+    
+    def test_add_validates_path(self, isolated_registry):
+        """Should raise ValueError for non-existent paths."""
+        registry = isolated_registry
+        
+        with pytest.raises(ValueError, match="Path does not exist"):
+            registry.add("invalid", Path("/nonexistent/path"))
+    
+    def test_add_validates_name(self, isolated_registry):
+        """Should raise ValueError for invalid project names."""
+        registry = isolated_registry
+        
+        with pytest.raises(ValueError, match="Invalid project name"):
+            registry.add("bad name!!!", self.test_project)
 
 
 class TestBrain:

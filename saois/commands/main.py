@@ -204,6 +204,14 @@ def cmd_add(name: str, path: str):
     """Add a new project."""
     ui.header()
 
+    # Validate name format first
+    import re
+    if not re.match(r'^[a-zA-Z0-9_-]+$', name):
+        ui.error(f"Invalid project name: '{name}'")
+        ui.dim("Use only letters, numbers, dashes, and underscores.")
+        ui.tip("Examples: my-project, my_project, myapp2")
+        return
+
     project_path = Path(path).expanduser().resolve()
 
     if registry.exists(name):
@@ -219,13 +227,17 @@ def cmd_add(name: str, path: str):
             ui.dim("Cancelled")
             return
 
-    registry.add(name, project_path)
-    ui.success(f"Added '{name}'")
-    ui.dim(str(project_path))
+    try:
+        registry.add(name, project_path)
+        ui.success(f"Added '{name}'")
+        ui.dim(str(project_path))
 
-    if project_path.exists():
-        if ui.confirm("Start working on it now?"):
-            cmd_work(name)
+        if project_path.exists():
+            if ui.confirm("Start working on it now?"):
+                cmd_work(name)
+    except ValueError as e:
+        ui.error(str(e))
+        ui.tip("Check the project name and path, then try again")
 
 
 def cmd_tools(verbose: bool = False):
